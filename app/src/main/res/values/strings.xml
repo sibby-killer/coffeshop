@@ -2,4 +2,6 @@
     <string name="app_name">coffeecafe</string>
     <string name="login">Login</string>
     <string name="register">Register</string>
+    <string name="hello_signup_here">Hello,SignUp here.</string>
+    <string name="full_name">Full Name</string>
 </resources>
