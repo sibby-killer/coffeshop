@@ -12,7 +12,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 public class MainActivity extends AppCompatActivity {
-Button registerUser;
+Button registerUser,loginUser;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -23,14 +23,25 @@ Button registerUser;
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+        SystemHelper systemHelper = new SystemHelper(this);
+        systemHelper.setSystemBars(R.color.gender,R.color.gender,false);
 
         registerUser = findViewById(R.id.bv_register);
+        loginUser = findViewById(R.id.bv_login);
 
         registerUser.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent registerIntent = new Intent(MainActivity.this,SignupActivity.class);
                 startActivity(registerIntent);
+            }
+        });
+
+        loginUser.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent loginUser = new Intent(getApplicationContext(),LoginActivity.class);
+                startActivity(loginUser);
             }
         });
 

@@ -23,6 +23,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
+
         <!-- Logo -->
         <ImageView
             android:id="@+id/logo"
@@ -75,6 +76,7 @@
             android:layout_height="wrap_content"
             android:textSize="18sp"
             android:hint="Email"
+            android:inputType="textEmailAddress"
             android:padding="14dp"
             android:minHeight="48dp"
             android:layout_marginTop="16dp"
@@ -140,7 +142,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
 
-            <RadioButton
+            <android.widget.RadioButton
                 android:id="@+id/radioMale"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -152,7 +154,7 @@
                 android:button="@drawable/radio_coffee_selector"
                 android:text="Male" />
 
-            <RadioButton
+            <android.widget.RadioButton
                 android:id="@+id/radioFemale"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
