@@ -100,22 +100,21 @@ public class SignupActivity extends AppCompatActivity {
         });
 
 
-        //validate if the edittext is empty
-        getFullName = etFullName.getText().toString().trim();
-        getEmail = etEmail.getText().toString().trim();
-        getPhone = etPhone.getText().toString().trim();
-        getPassword = etPassword.getText().toString().trim();
-        getConfirmedPassword = etConfirmPassword.getText().toString().trim();
-
-        int selectedGenderId = radioGroup.getCheckedRadioButtonId();
-
-
 
        registerUser.setOnClickListener(new View.OnClickListener() {
+
            @Override
            public void onClick(View view) {
+               //validate if the edittext is empty
+               getFullName = etFullName.getText().toString().trim();
+               getEmail = etEmail.getText().toString().trim();
+               getPhone = etPhone.getText().toString().trim();
+               getPassword = etPassword.getText().toString().trim();
+               getConfirmedPassword = etConfirmPassword.getText().toString().trim();
 
-               if(getFullName.isEmpty() || getEmail.isEmpty() || getPhone.isEmpty() || getPassword.isEmpty() || getConfirmedPassword.isEmpty() || selectedGenderId == -1){
+               int selectedGenderId = radioGroup.getCheckedRadioButtonId();
+               if(getFullName.isEmpty() || getEmail.isEmpty() || getPhone.isEmpty() || getPassword.isEmpty()
+                       || getConfirmedPassword.isEmpty() || selectedGenderId == -1){
                    Toast.makeText(getApplicationContext(),"All fields must be filled!",Toast.LENGTH_SHORT).show();
                    return;
                }
@@ -137,7 +136,8 @@ public class SignupActivity extends AppCompatActivity {
                confirmDetailsFragment.setArguments(bundle);
 
 
-               getSupportFragmentManager().beginTransaction().replace(R.id.fragmentContainer,confirmDetailsFragment).addToBackStack(null).commit();
+               getSupportFragmentManager().beginTransaction().replace(R.id.fragmentContainer,confirmDetailsFragment)
+                       .addToBackStack(null).commit();
 
            }
        });
