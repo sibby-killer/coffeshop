@@ -1,6 +1,7 @@
 package com.example.coffeecafe;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.method.HideReturnsTransformationMethod;
 import android.text.method.PasswordTransformationMethod;
@@ -8,6 +9,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Toast;
@@ -124,20 +126,16 @@ public class SignupActivity extends AppCompatActivity {
            }
 
                selectedGender = findViewById(selectedGenderId);
-               gender = selectedGender.toString().trim();
+               gender = selectedGender.getText().toString().trim();
            //Pass data to fragment
+               Intent confirmDetails = new Intent(getApplicationContext(),ConfirmDetails.class);
 
-               ConfirmDetailsFragment confirmDetailsFragment = new ConfirmDetailsFragment();
-               Bundle bundle = new Bundle();
-               bundle.putString("full_name", getFullName);
-               bundle.putString("email",getEmail);
-               bundle.putString("phone",getPhone);
-               bundle.putString("gender",gender);
-               confirmDetailsFragment.setArguments(bundle);
+               confirmDetails.putExtra("full_name",getFullName);
+               confirmDetails.putExtra("email",getEmail);
+               confirmDetails.putExtra("phone",getPhone);
+               confirmDetails.putExtra("gender",gender);
 
-
-               getSupportFragmentManager().beginTransaction().replace(R.id.fragmentContainer,confirmDetailsFragment)
-                       .addToBackStack(null).commit();
+               startActivity(confirmDetails);
 
            }
        });
