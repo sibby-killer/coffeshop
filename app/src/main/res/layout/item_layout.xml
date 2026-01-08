@@ -1,50 +1,68 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:elevation="5dp"
+    android:layout_marginHorizontal="12dp"
+    android:layout_marginVertical="8dp"
+    android:padding="14dp"
     android:background="@drawable/item_view_design"
-    >
+    android:elevation="6dp">
+
+    <!-- Coffee Name -->
     <TextView
         android:id="@+id/name"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Name"
-        android:textSize="24sp"
+        android:text="Cappuccino"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:textColor="@color/tagline"
         android:fontFamily="@font/poppins_regular"
-        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/price"/>
+
+    <!-- Price -->
     <TextView
         android:id="@+id/price"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Ksh.250"
-        android:textSize="24sp"
+        android:text="Ksh. 250"
+        android:textSize="13sp"
+        android:textColor="@color/tagline"
         android:fontFamily="@font/poppins_regular"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginEnd="20dp"
-        />
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <!-- Description -->
     <TextView
-        android:id="@+id/Description"
-        android:layout_width="match_parent"
+        android:id="@+id/description"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:gravity="center"
-        android:text="Smooth milk coffee"
-        android:textSize="28sp"
+        android:layout_marginTop="6dp"
+        android:text="Smooth milk coffee with a rich aroma"
+        android:textSize="16sp"
         android:textStyle="bold"
+        android:textColor="@color/tagline"
         android:fontFamily="@font/poppins_regular"
+        android:maxLines="2"
+        android:ellipsize="end"
         app:layout_constraintTop_toBottomOf="@id/name"
         app:layout_constraintStart_toStartOf="parent"
-        />
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <!-- Coffee Image -->
     <ImageView
-        android:id="@+id/coffeeimege"
-        android:layout_width="44dp"
-        android:layout_height="44dp"
+        android:id="@+id/coffeeImage"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginTop="10dp"
         android:src="@drawable/logo"
-        app:layout_constraintTop_toBottomOf="@id/Description"
+        android:scaleType="centerCrop"
+        android:background="@color/white"
+        app:layout_constraintTop_toBottomOf="@id/description"
         app:layout_constraintStart_toStartOf="parent"
-        />
+        app:layout_constraintBottom_toBottomOf="parent"/>
+
 </androidx.constraintlayout.widget.ConstraintLayout>
