@@ -16,8 +16,8 @@ import java.util.concurrent.TimeUnit;
 public class SupabaseClient {
     private static SupabaseClient instance;
     private final OkHttpClient httpClient;
-    private final String supabaseUrl;
-    private final String supabaseKey;
+    private String supabaseUrl;
+    private String supabaseKey;
     private String authToken;
 
     private SupabaseClient() {
