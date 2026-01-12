@@ -21,7 +21,7 @@ import java.util.List;
 public class CheckoutActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private TextView tvTotal, tvEmail;
-    private Button btnPayWithPaystack;
+    private Button btnPayWithMpesa;
     private CartManager cartManager;
     private SessionManager sessionManager;
     private OrderRepository orderRepository;
@@ -59,13 +59,13 @@ public class CheckoutActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.checkout_recycler_view);
         tvTotal = findViewById(R.id.checkout_total);
         tvEmail = findViewById(R.id.checkout_email);
-        btnPayWithPaystack = findViewById(R.id.btn_pay_with_paystack);
+        btnPayWithMpesa = findViewById(R.id.btn_pay_with_mpesa);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         loadCheckoutData();
 
-        btnPayWithPaystack.setOnClickListener(v -> initiatePaystackPayment());
+        btnPayWithMpesa.setOnClickListener(v -> initiateMpesaPayment());
     }
 
     private void loadCheckoutData() {
@@ -92,7 +92,7 @@ public class CheckoutActivity extends AppCompatActivity {
         }
     }
 
-    private void initiatePaystackPayment() {
+    private void initiateMpesaPayment() {
         String userEmail = sessionManager.getUserEmail();
         if (userEmail == null) {
             Toast.makeText(this, "Please login to continue", Toast.LENGTH_SHORT).show();
@@ -108,7 +108,7 @@ public class CheckoutActivity extends AppCompatActivity {
                     progressDialog.dismiss();
                     currentPaymentReference = reference;
                     
-                    // Open Paystack payment page in browser
+                    // Open M-PESA payment page in browser
                     Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(authorizationUrl));
                     startActivity(browserIntent);
                     

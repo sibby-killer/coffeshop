@@ -116,10 +116,10 @@
             app:layout_constraintEnd_toEndOf="parent" />
 
         <Button
-            android:id="@+id/btn_pay_with_paystack"
+            android:id="@+id/btn_pay_with_mpesa"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Pay with Paystack"
+            android:text="Pay with M-PESA"
             android:textAllCaps="false"
             android:textSize="18sp"
             android:textStyle="bold"
