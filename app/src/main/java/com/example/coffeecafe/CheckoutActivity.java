@@ -9,16 +9,13 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import android.content.Intent;
+import android.net.Uri;
 import com.example.coffeecafe.models.CartItem;
+import com.example.coffeecafe.payment.PaystackManager;
 import com.example.coffeecafe.repositories.OrderRepository;
 import com.example.coffeecafe.utils.CartManager;
-import com.example.coffeecafe.utils.Constants;
 import com.example.coffeecafe.utils.SessionManager;
-import co.paystack.android.Paystack;
-import co.paystack.android.PaystackSdk;
-import co.paystack.android.Transaction;
-import co.paystack.android.model.Card;
-import co.paystack.android.model.Charge;
 import java.util.List;
 
 public class CheckoutActivity extends AppCompatActivity {
@@ -28,9 +25,11 @@ public class CheckoutActivity extends AppCompatActivity {
     private CartManager cartManager;
     private SessionManager sessionManager;
     private OrderRepository orderRepository;
+    private PaystackManager paystackManager;
     private List<CartItem> cartItems;
     private double totalAmount;
     private ProgressDialog progressDialog;
+    private String currentPaymentReference;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,19 +39,10 @@ public class CheckoutActivity extends AppCompatActivity {
         SystemHelper systemHelper = new SystemHelper(this);
         systemHelper.setSystemBars(R.color.gender, R.color.gender, false);
 
-        // Initialize Paystack with public key from BuildConfig
-        PaystackSdk.initialize(getApplicationContext());
-        String paystackKey = Constants.getPaystackPublicKey();
-        if (paystackKey == null || paystackKey.isEmpty()) {
-            Toast.makeText(this, "Paystack not configured. Please set up local.properties file.", Toast.LENGTH_LONG).show();
-            finish();
-            return;
-        }
-        PaystackSdk.setPublicKey(paystackKey);
-
         cartManager = CartManager.getInstance(this);
         sessionManager = SessionManager.getInstance(this);
         orderRepository = new OrderRepository(this);
+        paystackManager = PaystackManager.getInstance(this);
         
         progressDialog = new ProgressDialog(this);
         progressDialog.setMessage("Processing payment...");
@@ -101,45 +91,72 @@ public class CheckoutActivity extends AppCompatActivity {
             return;
         }
 
-        // Convert amount to kobo (Paystack requires amount in smallest currency unit)
-        // For KES, multiply by 100
-        int amountInCents = (int) (totalAmount * 100);
-
-        Charge charge = new Charge();
-        charge.setEmail(userEmail);
-        charge.setAmount(amountInCents);
-        charge.setCurrency("KES");
-
         progressDialog.show();
 
-        PaystackSdk.chargeCard(this, charge, new Paystack.TransactionCallback() {
+        paystackManager.initializePayment(userEmail, totalAmount, new PaystackManager.PaymentCallback() {
             @Override
-            public void onSuccess(Transaction transaction) {
+            public void onSuccess(String reference, String authorizationUrl) {
                 runOnUiThread(() -> {
                     progressDialog.dismiss();
-                    handlePaymentSuccess(transaction);
+                    currentPaymentReference = reference;
+                    
+                    // Open Paystack payment page in browser
+                    Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(authorizationUrl));
+                    startActivity(browserIntent);
+                    
+                    Toast.makeText(CheckoutActivity.this, 
+                        "Complete payment in browser. Reference: " + reference, 
+                        Toast.LENGTH_LONG).show();
                 });
             }
 
             @Override
-            public void beforeValidate(Transaction transaction) {
-                // Called before validation
-            }
-
-            @Override
-            public void onError(Throwable error, Transaction transaction) {
+            public void onError(String error) {
                 runOnUiThread(() -> {
                     progressDialog.dismiss();
                     Toast.makeText(CheckoutActivity.this, 
-                        "Payment failed: " + error.getMessage(), 
+                        "Payment initialization failed: " + error, 
                         Toast.LENGTH_LONG).show();
                 });
             }
         });
     }
 
-    private void handlePaymentSuccess(Transaction transaction) {
-        String reference = transaction.getReference();
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // When user returns from browser, verify payment
+        if (currentPaymentReference != null) {
+            verifyPaymentStatus();
+        }
+    }
+
+    private void verifyPaymentStatus() {
+        progressDialog.setMessage("Verifying payment...");
+        progressDialog.show();
+
+        paystackManager.verifyPayment(currentPaymentReference, new PaystackManager.PaymentCallback() {
+            @Override
+            public void onSuccess(String reference, String message) {
+                runOnUiThread(() -> {
+                    progressDialog.dismiss();
+                    handlePaymentSuccess(reference);
+                });
+            }
+
+            @Override
+            public void onError(String error) {
+                runOnUiThread(() -> {
+                    progressDialog.dismiss();
+                    Toast.makeText(CheckoutActivity.this, 
+                        "Payment verification: " + error, 
+                        Toast.LENGTH_SHORT).show();
+                });
+            }
+        });
+    }
+
+    private void handlePaymentSuccess(String reference) {
         
         progressDialog.setMessage("Creating order...");
         progressDialog.show();

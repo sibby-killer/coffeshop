@@ -74,8 +74,7 @@ dependencies {
     // Gson for JSON
     implementation(libs.gson)
     
-    // Paystack for payments (direct implementation)
-    implementation("co.paystack.android:paystack:3.1.5")
+    // No Paystack SDK - using direct API integration instead
     
     // OkHttp for networking
     implementation(libs.okhttp)
