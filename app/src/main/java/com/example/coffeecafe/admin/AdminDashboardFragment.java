@@ -47,7 +47,7 @@ public class AdminDashboardFragment extends Fragment {
     }
 
     private void loadDashboard() {
-        progressBar.setVisibility(View.VISIBLE);
+        if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
         String token = AuthManager.getInstance(getContext()).getAccessToken();
 
         new Thread(() -> {
@@ -68,7 +68,7 @@ public class AdminDashboardFragment extends Fragment {
 
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
-                        progressBar.setVisibility(View.GONE);
+                        if (progressBar != null) progressBar.setVisibility(View.GONE);
                         totalShopsView.setText(String.valueOf(shops != null ? shops.length : 0));
                         pendingAppsView.setText(String.valueOf(apps != null ? apps.length : 0));
                         totalOrdersView.setText(String.valueOf(orders != null ? orders.length : 0));
@@ -78,7 +78,7 @@ public class AdminDashboardFragment extends Fragment {
             } catch (Exception e) {
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
-                        progressBar.setVisibility(View.GONE);
+                        if (progressBar != null) progressBar.setVisibility(View.GONE);
                         noActivityText.setText("Error loading data. Pull to refresh.");
                         noActivityText.setVisibility(View.VISIBLE);
                     });

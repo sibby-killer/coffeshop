@@ -59,6 +59,17 @@ public class LoginActivity extends AppCompatActivity {
         signupLink.setOnClickListener(v -> {
             startActivity(new Intent(this, SignupActivity.class));
         });
+
+        // Forgot Password link
+        TextView forgotPasswordLink = findViewById(R.id.forgot_password_link);
+        forgotPasswordLink.setOnClickListener(v -> {
+            String email = emailInput.getText().toString().trim();
+            if (email.isEmpty()) {
+                Toast.makeText(this, "Enter your email address first", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            showForgotPasswordDialog(email);
+        });
     }
 
     private void attemptLogin() {
@@ -126,6 +137,38 @@ public class LoginActivity extends AppCompatActivity {
                 });
             }
         });
+    }
+
+    private void showForgotPasswordDialog(String email) {
+        new AlertDialog.Builder(this)
+                .setTitle("Reset Password")
+                .setMessage("A password reset link will be sent to:\n\n" + email + "\n\nCheck your inbox and follow the instructions.")
+                .setPositiveButton("Send Reset Link", (dialog, which) -> {
+                    loginBtn.setEnabled(false);
+                    loginBtn.setText("Sending...");
+
+                    AuthManager.getInstance(this).resetPassword(email, new AuthManager.SimpleCallback() {
+                        @Override
+                        public void onSuccess() {
+                            runOnUiThread(() -> {
+                                loginBtn.setEnabled(true);
+                                loginBtn.setText("Sign In");
+                                Toast.makeText(LoginActivity.this, "Reset link sent! Check your email.", Toast.LENGTH_LONG).show();
+                            });
+                        }
+
+                        @Override
+                        public void onError(String error) {
+                            runOnUiThread(() -> {
+                                loginBtn.setEnabled(true);
+                                loginBtn.setText("Sign In");
+                                Toast.makeText(LoginActivity.this, "Failed: " + error, Toast.LENGTH_LONG).show();
+                            });
+                        }
+                    });
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     private void navigateToDashboard(Profile profile) {

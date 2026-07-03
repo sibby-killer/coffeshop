@@ -294,6 +294,46 @@ public class AuthManager {
     }
 
     /**
+     * Send a password reset email via Supabase.
+     */
+    public void resetPassword(String email, SimpleCallback callback) {
+        new Thread(() -> {
+            try {
+                Map<String, Object> body = new HashMap<>();
+                body.put("email", email);
+
+                String jsonBody = gson.toJson(body);
+                SupabaseApi.getInstance().postAuth("recover", jsonBody);
+
+                callback.onSuccess();
+            } catch (Exception e) {
+                String msg = e.getMessage() != null ? e.getMessage() : "Failed to send reset email";
+                if (msg.contains("AUTH_ERROR")) {
+                    String[] parts = msg.split("\\|", 3);
+                    if (parts.length >= 3) {
+                        String errorBody = parts[2];
+                        try {
+                            JsonObject errorJson = JsonParser.parseString(errorBody).getAsJsonObject();
+                            String errorDesc = errorJson.has("error_description")
+                                    ? errorJson.get("error_description").getAsString()
+                                    : errorJson.has("msg")
+                                    ? errorJson.get("msg").getAsString()
+                                    : errorBody;
+                            callback.onError(errorDesc);
+                        } catch (Exception parseEx) {
+                            callback.onError(errorBody);
+                        }
+                    } else {
+                        callback.onError(msg);
+                    }
+                } else {
+                    callback.onError(msg);
+                }
+            }
+        }).start();
+    }
+
+    /**
      * Save session locally without Supabase (for hardcoded admin bypass).
      */
     public void saveLocalSession(Profile profile) {

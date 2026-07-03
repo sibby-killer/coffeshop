@@ -1,58 +1,21 @@
 -- RLS Fix for Supabase
 -- Run this in Supabase SQL Editor to fix the "infinite recursion" error
--- This drops ALL existing policies on profiles and recreates them properly
+-- Uses dynamic DROP to catch ALL policy names, even partial runs
 
--- Step 1: Drop ALL existing policies on profiles table
-DROP POLICY IF EXISTS "Users can view own profile" ON profiles;
-DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
-DROP POLICY IF EXISTS "Users can insert own profile" ON profiles;
-DROP POLICY IF EXISTS "Enable read access for users based on user_id" ON profiles;
-DROP POLICY IF EXISTS "Enable insert for authenticated users only" ON profiles;
-DROP POLICY IF EXISTS "Enable update for users based on user_id" ON profiles;
-DROP POLICY IF EXISTS "profiles_select_policy" ON profiles;
-DROP POLICY IF EXISTS "profiles_insert_policy" ON profiles;
-DROP POLICY IF EXISTS "profiles_update_policy" ON profiles;
-DROP POLICY IF EXISTS "Allow read access to own profile" ON profiles;
-DROP POLICY IF EXISTS "Allow insert own profile" ON profiles;
-DROP POLICY IF EXISTS "Allow update own profile" ON profiles;
-
--- Step 2: Drop ALL existing policies on shops table
-DROP POLICY IF EXISTS "Public read access" ON shops;
-DROP POLICY IF EXISTS "Shop owners can manage their shops" ON shops;
-DROP POLICY IF EXISTS "shops_select_policy" ON shops;
-DROP POLICY IF EXISTS "shops_insert_policy" ON shops;
-DROP POLICY IF EXISTS "shops_update_policy" ON shops;
-DROP POLICY IF EXISTS "Allow public read" ON shops;
-DROP POLICY IF EXISTS "Allow shop owner insert" ON shops;
-DROP POLICY IF EXISTS "Allow shop owner update" ON shops;
-
--- Step 3: Drop ALL existing policies on products table
-DROP POLICY IF EXISTS "Public read access" ON products;
-DROP POLICY IF EXISTS "Shop owners can manage products" ON products;
-DROP POLICY IF EXISTS "products_select_policy" ON products;
-DROP POLICY IF EXISTS "products_insert_policy" ON products;
-DROP POLICY IF EXISTS "products_update_policy" ON products;
-DROP POLICY IF EXISTS "products_delete_policy" ON products;
-
--- Step 4: Drop ALL existing policies on orders table
-DROP POLICY IF EXISTS "Users can view own orders" ON orders;
-DROP POLICY IF EXISTS "Users can create orders" ON orders;
-DROP POLICY IF EXISTS "orders_select_policy" ON orders;
-DROP POLICY IF EXISTS "orders_insert_policy" ON orders;
-DROP POLICY IF EXISTS "orders_update_policy" ON orders;
-
--- Step 5: Drop ALL existing policies on order_items table
-DROP POLICY IF EXISTS "Users can view own order items" ON order_items;
-DROP POLICY IF EXISTS "Users can insert order items" ON order_items;
-DROP POLICY IF EXISTS "order_items_select_policy" ON order_items;
-DROP POLICY IF EXISTS "order_items_insert_policy" ON order_items;
-
--- Step 6: Drop ALL existing policies on shop_applications table
-DROP POLICY IF EXISTS "Users can view own applications" ON shop_applications;
-DROP POLICY IF EXISTS "Users can create applications" ON shop_applications;
-DROP POLICY IF EXISTS "shop_applications_select_policy" ON shop_applications;
-DROP POLICY IF EXISTS "shop_applications_insert_policy" ON shop_applications;
-DROP POLICY IF EXISTS "shop_applications_update_policy" ON shop_applications;
+-- Step 1: Drop ALL existing policies dynamically
+DO $$
+DECLARE
+  r RECORD;
+BEGIN
+  FOR r IN (
+    SELECT schemaname, tablename, policyname
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename IN ('profiles', 'shops', 'products', 'orders', 'order_items', 'shop_applications')
+  ) LOOP
+    EXECUTE format('DROP POLICY IF EXISTS %I ON %I', r.policyname, r.tablename);
+  END LOOP;
+END $$;
 
 -- ============================================
 -- RECREATE POLICIES (NO RECURSION!)

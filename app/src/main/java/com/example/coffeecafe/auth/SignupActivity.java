@@ -147,7 +147,14 @@ public class SignupActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     signupBtn.setEnabled(true);
                     signupBtn.setText("Create Account");
-                    Toast.makeText(SignupActivity.this, "Signup failed: " + error, Toast.LENGTH_LONG).show();
+
+                    if (error.toLowerCase().contains("already registered")
+                            || error.toLowerCase().contains("already exists")
+                            || error.toLowerCase().contains("user already")) {
+                        showEmailInUseDialog(emailInput.getText().toString().trim());
+                    } else {
+                        Toast.makeText(SignupActivity.this, "Signup failed: " + error, Toast.LENGTH_LONG).show();
+                    }
                 });
             }
         });
@@ -192,6 +199,32 @@ public class SignupActivity extends AppCompatActivity {
                 .putString("location", shopLocationInput.getText().toString().trim())
                 .putString("phone", shopPhoneInput.getText().toString().trim())
                 .apply();
+    }
+
+    private void showEmailInUseDialog(String email) {
+        new AlertDialog.Builder(this)
+                .setTitle("Email Already Registered")
+                .setMessage("An account with this email already exists.\n\nYou can login or reset your password.")
+                .setPositiveButton("Login", (dialog, which) -> {
+                    dialog.dismiss();
+                    finish();
+                })
+                .setNeutralButton("Reset Password", (dialog, which) -> {
+                    dialog.dismiss();
+                    AuthManager.getInstance(this).resetPassword(email, new AuthManager.SimpleCallback() {
+                        @Override
+                        public void onSuccess() {
+                            runOnUiThread(() -> Toast.makeText(SignupActivity.this, "Reset link sent! Check your email.", Toast.LENGTH_LONG).show());
+                        }
+
+                        @Override
+                        public void onError(String error) {
+                            runOnUiThread(() -> Toast.makeText(SignupActivity.this, "Failed: " + error, Toast.LENGTH_LONG).show());
+                        }
+                    });
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     private void showEmailVerificationDialog(String email) {

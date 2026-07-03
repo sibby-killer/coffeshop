@@ -58,7 +58,7 @@ public class ProfileFragment extends Fragment {
     }
 
     private void loadProfile() {
-        progressBar.setVisibility(View.VISIBLE);
+        if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
         Profile profile = AuthManager.getInstance(getContext()).getCurrentProfile();
 
         if (profile != null) {
@@ -74,7 +74,7 @@ public class ProfileFragment extends Fragment {
                 statsCard.setVisibility(View.GONE);
             }
         }
-        progressBar.setVisibility(View.GONE);
+        if (progressBar != null) progressBar.setVisibility(View.GONE);
     }
 
     private void loadCustomerStats() {
@@ -115,7 +115,7 @@ public class ProfileFragment extends Fragment {
             return;
         }
 
-        progressBar.setVisibility(View.VISIBLE);
+        if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
         String token = AuthManager.getInstance(getContext()).getAccessToken();
         String userId = AuthManager.getInstance(getContext()).getCurrentUserId();
 
@@ -126,7 +126,7 @@ public class ProfileFragment extends Fragment {
 
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
-                        progressBar.setVisibility(View.GONE);
+                        if (progressBar != null) progressBar.setVisibility(View.GONE);
                         nameText.setText(name);
                         Toast.makeText(getContext(), "Profile updated!", Toast.LENGTH_SHORT).show();
                     });
@@ -134,7 +134,7 @@ public class ProfileFragment extends Fragment {
             } catch (Exception e) {
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
-                        progressBar.setVisibility(View.GONE);
+                        if (progressBar != null) progressBar.setVisibility(View.GONE);
                         Toast.makeText(getContext(), "Failed to update: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     });
                 }
