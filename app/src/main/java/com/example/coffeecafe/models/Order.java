@@ -1,89 +1,103 @@
 package com.example.coffeecafe.models;
 
-import java.io.Serializable;
-import java.util.List;
+import com.google.gson.annotations.SerializedName;
 
-public class Order implements Serializable {
+public class Order {
+    @SerializedName("id")
     private String id;
-    private String userId;
+
+    @SerializedName("customer_id")
+    private String customerId;
+
+    @SerializedName("shop_id")
+    private String shopId;
+
+    @SerializedName("total_amount")
     private double totalAmount;
-    private String status; // pending, paid, completed, cancelled
+
+    @SerializedName("status")
+    private String status;
+
+    @SerializedName("payment_reference")
     private String paymentReference;
+
+    @SerializedName("payment_method")
+    private String paymentMethod;
+
+    @SerializedName("notes")
+    private String notes;
+
+    @SerializedName("created_at")
     private String createdAt;
+
+    @SerializedName("updated_at")
     private String updatedAt;
-    private List<OrderItem> items;
 
-    public Order() {
-    }
+    // Transient fields (not from DB, joined from other tables)
+    private transient String shopName;
+    private transient String customerName;
 
-    public Order(String id, String userId, double totalAmount, String status) {
-        this.id = id;
-        this.userId = userId;
+    public Order() {}
+
+    public Order(String customerId, String shopId, double totalAmount) {
+        this.customerId = customerId;
+        this.shopId = shopId;
         this.totalAmount = totalAmount;
-        this.status = status;
+        this.status = "pending";
     }
 
-    public String getId() {
-        return id;
-    }
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
-    public void setId(String id) {
-        this.id = id;
-    }
+    public String getCustomerId() { return customerId; }
+    public void setCustomerId(String customerId) { this.customerId = customerId; }
 
-    public String getUserId() {
-        return userId;
-    }
+    public String getShopId() { return shopId; }
+    public void setShopId(String shopId) { this.shopId = shopId; }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
+    public double getTotalAmount() { return totalAmount; }
+    public void setTotalAmount(double totalAmount) { this.totalAmount = totalAmount; }
 
-    public double getTotalAmount() {
-        return totalAmount;
-    }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
-    public void setTotalAmount(double totalAmount) {
-        this.totalAmount = totalAmount;
-    }
+    public String getPaymentReference() { return paymentReference; }
+    public void setPaymentReference(String paymentReference) { this.paymentReference = paymentReference; }
 
-    public String getStatus() {
-        return status;
-    }
+    public String getPaymentMethod() { return paymentMethod; }
+    public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
 
-    public void setStatus(String status) {
-        this.status = status;
-    }
+    public String getNotes() { return notes; }
+    public void setNotes(String notes) { this.notes = notes; }
 
-    public String getPaymentReference() {
-        return paymentReference;
-    }
+    public String getCreatedAt() { return createdAt; }
+    public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
 
-    public void setPaymentReference(String paymentReference) {
-        this.paymentReference = paymentReference;
-    }
+    public String getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(String updatedAt) { this.updatedAt = updatedAt; }
 
-    public String getCreatedAt() {
-        return createdAt;
-    }
+    public String getShopName() { return shopName; }
+    public void setShopName(String shopName) { this.shopName = shopName; }
 
-    public void setCreatedAt(String createdAt) {
-        this.createdAt = createdAt;
-    }
+    public String getCustomerName() { return customerName; }
+    public void setCustomerName(String customerName) { this.customerName = customerName; }
 
-    public String getUpdatedAt() {
-        return updatedAt;
-    }
+    public boolean isPending() { return "pending".equals(status); }
+    public boolean isPaid() { return "paid".equals(status); }
+    public boolean isPreparing() { return "preparing".equals(status); }
+    public boolean isReady() { return "ready".equals(status); }
+    public boolean isCompleted() { return "completed".equals(status); }
+    public boolean isCancelled() { return "cancelled".equals(status); }
 
-    public void setUpdatedAt(String updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public List<OrderItem> getItems() {
-        return items;
-    }
-
-    public void setItems(List<OrderItem> items) {
-        this.items = items;
+    public String getStatusDisplay() {
+        switch (status) {
+            case "pending": return "Pending Payment";
+            case "paid": return "Payment Confirmed";
+            case "preparing": return "Preparing";
+            case "ready": return "Ready for Pickup";
+            case "completed": return "Completed";
+            case "cancelled": return "Cancelled";
+            default: return status;
+        }
     }
 }

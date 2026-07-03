@@ -17,30 +17,35 @@
         android:theme="@style/Theme.Coffeecafe"
         tools:targetApi="31">
         <activity
-            android:name=".DashBoard"
-            android:exported="false" />
-        <activity
-            android:name=".CheckoutActivity"
-            android:exported="false" />
-        <activity
-            android:name=".PaymentSuccessActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ConfirmDetails"
-            android:exported="false" />
-        <activity
-            android:name=".LoginActivity"
-            android:exported="false" />
-        <activity
-            android:name=".SignupActivity"
-            android:exported="false" />
-        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".auth.LoginActivity"
+            android:exported="false" />
+        <activity
+            android:name=".auth.SignupActivity"
+            android:exported="false" />
+        <activity
+            android:name=".DashBoard"
+            android:exported="false" />
+        <activity
+            android:name=".customer.CheckoutActivity"
+            android:exported="false" />
+        <activity
+            android:name=".auth.EmailVerifiedActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="coffeecafe"
+                    android:host="email-verified" />
             </intent-filter>
         </activity>
     </application>

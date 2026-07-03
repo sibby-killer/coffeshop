@@ -2,68 +2,72 @@ package com.example.coffeecafe.utils;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import com.example.coffeecafe.config.SupabaseClient;
 
 public class SessionManager {
     private static SessionManager instance;
     private final SharedPreferences prefs;
-    private final SharedPreferences.Editor editor;
-    private final Context context;
+
+    private static final String PREFS_NAME = "CoffeeShopSession";
+    private static final String KEY_IS_LOGGED_IN = "is_logged_in";
+    private static final String KEY_USER_ID = "user_id";
+    private static final String KEY_USER_ROLE = "user_role";
+    private static final String KEY_USER_NAME = "user_name";
+    private static final String KEY_USER_EMAIL = "user_email";
 
     private SessionManager(Context context) {
-        this.context = context.getApplicationContext();
-        prefs = this.context.getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE);
-        editor = prefs.edit();
+        prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
     }
 
     public static synchronized SessionManager getInstance(Context context) {
         if (instance == null) {
-            instance = new SessionManager(context);
+            instance = new SessionManager(context.getApplicationContext());
         }
         return instance;
     }
 
-    public void saveUserSession(String userId, String email, String token, boolean isAdmin) {
-        editor.putString(Constants.PREF_USER_ID, userId);
-        editor.putString(Constants.PREF_USER_EMAIL, email);
-        editor.putString(Constants.PREF_USER_TOKEN, token);
-        editor.putBoolean(Constants.PREF_IS_ADMIN, isAdmin);
-        editor.apply();
-        
-        // Set token in Supabase client
-        SupabaseClient.getInstance().setAuthToken(token);
-    }
-
-    public String getUserId() {
-        return prefs.getString(Constants.PREF_USER_ID, null);
-    }
-
-    public String getUserEmail() {
-        return prefs.getString(Constants.PREF_USER_EMAIL, null);
-    }
-
-    public String getUserToken() {
-        return prefs.getString(Constants.PREF_USER_TOKEN, null);
-    }
-
-    public boolean isAdmin() {
-        return prefs.getBoolean(Constants.PREF_IS_ADMIN, false);
+    public void saveLoginSession(String userId, String role, String name, String email) {
+        prefs.edit()
+                .putBoolean(KEY_IS_LOGGED_IN, true)
+                .putString(KEY_USER_ID, userId)
+                .putString(KEY_USER_ROLE, role)
+                .putString(KEY_USER_NAME, name)
+                .putString(KEY_USER_EMAIL, email)
+                .apply();
     }
 
     public boolean isLoggedIn() {
-        return getUserToken() != null && getUserId() != null;
+        return prefs.getBoolean(KEY_IS_LOGGED_IN, false);
+    }
+
+    public String getUserId() {
+        return prefs.getString(KEY_USER_ID, "");
+    }
+
+    public String getUserRole() {
+        return prefs.getString(KEY_USER_ROLE, "");
+    }
+
+    public String getUserName() {
+        return prefs.getString(KEY_USER_NAME, "");
+    }
+
+    public String getUserEmail() {
+        return prefs.getString(KEY_USER_EMAIL, "");
+    }
+
+    public boolean isAdmin() {
+        return "admin".equals(getUserRole());
+    }
+
+    public boolean isShopOwner() {
+        return "shop_owner".equals(getUserRole());
+    }
+
+    public boolean isCustomer() {
+        return "customer".equals(getUserRole());
     }
 
     public void clearSession() {
-        editor.clear();
-        editor.apply();
-        SupabaseClient.getInstance().setAuthToken(null);
-    }
-
-    public void restoreSession() {
-        String token = getUserToken();
-        if (token != null) {
-            SupabaseClient.getInstance().setAuthToken(token);
-        }
+        prefs.edit().clear().apply();
     }
 }

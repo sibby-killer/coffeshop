@@ -1,83 +1,60 @@
 package com.example.coffeecafe.models;
 
-import java.io.Serializable;
+import com.google.gson.annotations.SerializedName;
 
-public class OrderItem implements Serializable {
+public class OrderItem {
+    @SerializedName("id")
     private String id;
+
+    @SerializedName("order_id")
     private String orderId;
+
+    @SerializedName("product_id")
     private String productId;
+
+    @SerializedName("product_name")
     private String productName;
+
+    @SerializedName("quantity")
     private int quantity;
+
+    @SerializedName("price")
     private double price;
-    private double subtotal;
 
-    public OrderItem() {
-    }
+    @SerializedName("created_at")
+    private String createdAt;
 
-    public OrderItem(String orderId, String productId, String productName, int quantity, double price) {
-        this.orderId = orderId;
+    public OrderItem() {}
+
+    public OrderItem(String productId, String productName, int quantity, double price) {
         this.productId = productId;
         this.productName = productName;
         this.quantity = quantity;
         this.price = price;
-        this.subtotal = quantity * price;
     }
 
-    public String getId() {
-        return id;
-    }
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
-    public void setId(String id) {
-        this.id = id;
-    }
+    public String getOrderId() { return orderId; }
+    public void setOrderId(String orderId) { this.orderId = orderId; }
 
-    public String getOrderId() {
-        return orderId;
-    }
+    public String getProductId() { return productId; }
+    public void setProductId(String productId) { this.productId = productId; }
 
-    public void setOrderId(String orderId) {
-        this.orderId = orderId;
-    }
+    public String getProductName() { return productName; }
+    public void setProductName(String productName) { this.productName = productName; }
 
-    public String getProductId() {
-        return productId;
-    }
+    public int getQuantity() { return quantity; }
+    public void setQuantity(int quantity) { this.quantity = quantity; }
 
-    public void setProductId(String productId) {
-        this.productId = productId;
-    }
+    public double getPrice() { return price; }
+    public void setPrice(double price) { this.price = price; }
 
-    public String getProductName() {
-        return productName;
-    }
-
-    public void setProductName(String productName) {
-        this.productName = productName;
-    }
-
-    public int getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(int quantity) {
-        this.quantity = quantity;
-        this.subtotal = quantity * price;
-    }
-
-    public double getPrice() {
-        return price;
-    }
-
-    public void setPrice(double price) {
-        this.price = price;
-        this.subtotal = quantity * price;
-    }
+    public String getCreatedAt() { return createdAt; }
+    public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
 
     public double getSubtotal() {
-        return subtotal;
-    }
-
-    public void setSubtotal(double subtotal) {
-        this.subtotal = subtotal;
+        return price * quantity;
     }
 }

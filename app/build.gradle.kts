@@ -33,6 +33,8 @@ android {
         buildConfigField("String", "SUPABASE_URL", "\"${properties.getProperty("supabase.url") ?: ""}\"")
         buildConfigField("String", "SUPABASE_KEY", "\"${properties.getProperty("supabase.key") ?: ""}\"")
         buildConfigField("String", "PAYSTACK_KEY", "\"${properties.getProperty("paystack.key") ?: ""}\"")
+        buildConfigField("String", "ADMIN_EMAIL", "\"${properties.getProperty("admin.email") ?: ""}\"")
+        buildConfigField("String", "ADMIN_PASSWORD", "\"${properties.getProperty("admin.password") ?: ""}\"")
     }
 
     buildTypes {
@@ -45,8 +47,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     
     packaging {
@@ -67,17 +69,22 @@ dependencies {
     implementation(libs.lifecycle.viewmodel)
     implementation(libs.lifecycle.livedata)
     
-    // Room Database
+    // Room Database (offline caching)
     implementation(libs.room.runtime)
     annotationProcessor(libs.room.compiler)
     
     // Gson for JSON
     implementation(libs.gson)
     
-    // No Paystack SDK - using direct API integration instead
-    
     // OkHttp for networking
     implementation(libs.okhttp)
+    
+    // Supabase REST API is handled via OkHttp directly (see SupabaseApi.java)
+    
+    // Image Loading
+    implementation(libs.glide)
+    annotationProcessor(libs.glide.compiler)
+    implementation(libs.circleimageview)
     
     // Testing
     testImplementation(libs.junit)

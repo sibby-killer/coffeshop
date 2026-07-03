@@ -1,23 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-  <item
-      android:id="@+id/drinks_tab"
-      android:title="Drinks"
-      android:icon="@drawable/drinks"
-      />
     <item
-        android:id="@+id/cart_tab"
-        android:title="Cart"
-        android:icon="@drawable/cart"
-        />
+        android:id="@+id/nav_home"
+        android:title="Home" />
     <item
-        android:id="@+id/orders_tab"
-        android:title="Orders"
-        android:icon="@drawable/orders"
-        />
+        android:id="@+id/nav_cart"
+        android:title="Cart" />
     <item
-        android:id="@+id/home_tab"
-        android:title="Home"
-        android:icon="@drawable/home"
-        />
+        android:id="@+id/nav_orders"
+        android:title="Orders" />
+    <item
+        android:id="@+id/nav_dashboard"
+        android:title="Dashboard" />
+    <item
+        android:id="@+id/nav_products"
+        android:title="Products" />
+    <item
+        android:id="@+id/nav_myshop"
+        android:title="My Shop" />
+    <item
+        android:id="@+id/nav_application"
+        android:title="Application" />
+    <item
+        android:id="@+id/nav_applications"
+        android:title="Applications" />
+    <item
+        android:id="@+id/nav_shops"
+        android:title="Shops" />
+    <item
+        android:id="@+id/nav_create_admin"
+        android:title="Create Admin" />
+    <item
+        android:id="@+id/nav_profile"
+        android:title="Profile" />
 </menu>

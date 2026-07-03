@@ -1,71 +1,149 @@
 package com.example.coffeecafe;
 
-import static com.example.coffeecafe.R.*;
-
 import android.os.Bundle;
+import android.view.Menu;
 import android.view.MenuItem;
 
-import androidx.activity.EdgeToEdge;
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
+import androidx.fragment.app.Fragment;
 
+import com.example.coffeecafe.admin.AdminDashboardFragment;
+import com.example.coffeecafe.admin.ApplicationsFragment;
+import com.example.coffeecafe.admin.CreateAdminFragment;
+import com.example.coffeecafe.admin.ManageShopsFragment;
+import com.example.coffeecafe.auth.AuthManager;
+import com.example.coffeecafe.customer.CartFragment;
+import com.example.coffeecafe.customer.CustomerHomeFragment;
+import com.example.coffeecafe.customer.CustomerOrdersFragment;
+import com.example.coffeecafe.profile.ProfileFragment;
+import com.example.coffeecafe.shopowner.ApplicationStatusFragment;
+import com.example.coffeecafe.shopowner.MyShopFragment;
+import com.example.coffeecafe.shopowner.ProductsFragment;
+import com.example.coffeecafe.shopowner.ShopDashboardFragment;
+import com.example.coffeecafe.shopowner.ShopOrdersFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.android.material.navigation.NavigationBarView;
 
 public class DashBoard extends AppCompatActivity {
-BottomNavigationView bottomNavigationView;
-
-DrinksFragment drinksFragment = new DrinksFragment();
-OrdersFragment ordersFragment = new OrdersFragment();
-HomeFragment homeFragment = new HomeFragment();
-CartFragment cartFragment = new CartFragment();
-
+    private BottomNavigationView bottomNavigationView;
+    private String userRole;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_dash_board);
 
-        SystemHelper systemHelper = new SystemHelper(this);
-        systemHelper.setSystemBars(R.color.gender,R.color.gender,false);
+        userRole = getIntent().getStringExtra("role");
+        if (userRole == null) {
+            userRole = AuthManager.getInstance(this).getCurrentRole();
+        }
 
         bottomNavigationView = findViewById(R.id.bottom_nav_bar);
 
-        // Check for navigation intent
-        String navigateTo = getIntent().getStringExtra("navigate_to");
-        if ("orders".equals(navigateTo)) {
-            getSupportFragmentManager().beginTransaction().replace(R.id.frameContainer,ordersFragment).commit();
-            bottomNavigationView.setSelectedItemId(R.id.orders_tab);
-        } else {
-            getSupportFragmentManager().beginTransaction().replace(R.id.frameContainer,drinksFragment).commit();
+        setupNavigationForRole();
+    }
+
+    private void setupNavigationForRole() {
+        Menu menu = bottomNavigationView.getMenu();
+        menu.clear();
+
+        if (userRole == null) {
+            userRole = "customer";
         }
 
-        bottomNavigationView.setOnItemSelectedListener(new NavigationBarView.OnItemSelectedListener() {
-            @Override
-            public boolean onNavigationItemSelected( MenuItem item) {
+        switch (userRole) {
+            case "admin":
+                setupAdminNavigation(menu);
+                break;
+            case "shop_owner":
+                setupShopOwnerNavigation(menu);
+                break;
+            default:
+                setupCustomerNavigation(menu);
+                break;
+        }
 
-                if(item.getItemId() == id.drinks_tab){
-                    getSupportFragmentManager().beginTransaction().replace(R.id.frameContainer,drinksFragment).commit();
-                    return true;
-                } else if (item.getItemId() == id.orders_tab) {
-                    getSupportFragmentManager().beginTransaction().replace(R.id.frameContainer,ordersFragment).commit();
-                    return true;
-                } else if (item.getItemId() == id.home_tab) {
-                    getSupportFragmentManager().beginTransaction().replace(R.id.frameContainer,homeFragment).commit();
-                    return true;
-                } else if (item.getItemId() == R.id.cart_tab) {
-                    getSupportFragmentManager().beginTransaction().replace(R.id.frameContainer,cartFragment).commit();
-                    return true;
-                }else {
-                    return false;
+        bottomNavigationView.setOnItemSelectedListener(item -> {
+            Fragment fragment = null;
+            int itemId = item.getItemId();
+
+            if (userRole.equals("admin")) {
+                if (itemId == R.id.nav_dashboard) {
+                    fragment = new AdminDashboardFragment();
+                } else if (itemId == R.id.nav_applications) {
+                    fragment = new ApplicationsFragment();
+                } else if (itemId == R.id.nav_shops) {
+                    fragment = new ManageShopsFragment();
+                } else if (itemId == R.id.nav_create_admin) {
+                    fragment = new CreateAdminFragment();
+                } else if (itemId == R.id.nav_profile) {
+                    fragment = new ProfileFragment();
                 }
-
+            } else if (userRole.equals("shop_owner")) {
+                if (itemId == R.id.nav_dashboard) {
+                    fragment = new ShopDashboardFragment();
+                } else if (itemId == R.id.nav_products) {
+                    fragment = new ProductsFragment();
+                } else if (itemId == R.id.nav_orders) {
+                    fragment = new ShopOrdersFragment();
+                } else if (itemId == R.id.nav_myshop) {
+                    fragment = new MyShopFragment();
+                } else if (itemId == R.id.nav_application) {
+                    fragment = new ApplicationStatusFragment();
+                } else if (itemId == R.id.nav_profile) {
+                    fragment = new ProfileFragment();
+                }
+            } else {
+                if (itemId == R.id.nav_home) {
+                    fragment = new CustomerHomeFragment();
+                } else if (itemId == R.id.nav_cart) {
+                    fragment = new CartFragment();
+                } else if (itemId == R.id.nav_orders) {
+                    fragment = new CustomerOrdersFragment();
+                } else if (itemId == R.id.nav_profile) {
+                    fragment = new ProfileFragment();
+                }
             }
+
+            if (fragment != null) {
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.fragment_container, fragment)
+                        .commit();
+                return true;
+            }
+            return false;
         });
 
+        // Load default fragment
+        if (userRole.equals("admin")) {
+            bottomNavigationView.setSelectedItemId(R.id.nav_dashboard);
+        } else if (userRole.equals("shop_owner")) {
+            bottomNavigationView.setSelectedItemId(R.id.nav_dashboard);
+        } else {
+            bottomNavigationView.setSelectedItemId(R.id.nav_home);
+        }
+    }
+
+    private void setupAdminNavigation(Menu menu) {
+        menu.add(0, R.id.nav_dashboard, 0, "Dashboard").setCheckable(true);
+        menu.add(0, R.id.nav_applications, 1, "Applications").setCheckable(true);
+        menu.add(0, R.id.nav_shops, 2, "Shops").setCheckable(true);
+        menu.add(0, R.id.nav_create_admin, 3, "Create Admin").setCheckable(true);
+        menu.add(0, R.id.nav_profile, 4, "Profile").setCheckable(true);
+    }
+
+    private void setupShopOwnerNavigation(Menu menu) {
+        menu.add(0, R.id.nav_dashboard, 0, "Dashboard").setCheckable(true);
+        menu.add(0, R.id.nav_products, 1, "Products").setCheckable(true);
+        menu.add(0, R.id.nav_orders, 2, "Orders").setCheckable(true);
+        menu.add(0, R.id.nav_myshop, 3, "My Shop").setCheckable(true);
+        menu.add(0, R.id.nav_application, 4, "Application").setCheckable(true);
+        menu.add(0, R.id.nav_profile, 5, "Profile").setCheckable(true);
+    }
+
+    private void setupCustomerNavigation(Menu menu) {
+        menu.add(0, R.id.nav_home, 0, "Home").setCheckable(true);
+        menu.add(0, R.id.nav_cart, 1, "Cart").setCheckable(true);
+        menu.add(0, R.id.nav_orders, 2, "Orders").setCheckable(true);
+        menu.add(0, R.id.nav_profile, 3, "Profile").setCheckable(true);
     }
 }
