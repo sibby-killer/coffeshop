@@ -122,14 +122,25 @@
                         android:id="@+id/phone_input"
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
-                        android:hint="Phone Number"
+                        android:hint="Phone: 2547XXXXXXXX (12 digits)"
                         android:inputType="phone"
                         android:textSize="15sp"
                         android:textColorHint="@color/text_hint"
                         android:textColor="@color/text_primary"
                         android:paddingHorizontal="16dp"
                         android:layout_marginTop="10dp"
-                        android:background="@drawable/edit_text_bg" />
+                        android:background="@drawable/edit_text_bg"
+                        android:maxLength="12" />
+
+                    <TextView
+                        android:id="@+id/phone_error"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text=""
+                        android:textSize="12sp"
+                        android:textColor="#FF5252"
+                        android:layout_marginTop="4dp"
+                        android:visibility="gone" />
 
                     <FrameLayout
                         android:layout_width="match_parent"
@@ -159,6 +170,17 @@
                             android:focusable="true"
                             android:layout_gravity="end" />
                     </FrameLayout>
+
+                    <TextView
+                        android:id="@+id/password_strength"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text=""
+                        android:textSize="12sp"
+                        android:textStyle="italic"
+                        android:textColor="#FF8F00"
+                        android:layout_marginTop="4dp"
+                        android:visibility="gone" />
 
                     <!-- Shop Owner Extra Fields -->
                     <LinearLayout
