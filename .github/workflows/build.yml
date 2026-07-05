@@ -30,20 +30,11 @@ jobs:
       - name: Build Debug APK
         run: ./gradlew assembleDebug --no-daemon
 
-      - name: Build Release APK (unsigned)
-        run: ./gradlew assembleRelease --no-daemon
-
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
           path: app/build/outputs/apk/debug/app-debug.apk
-
-      - name: Upload Release APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-release
-          path: app/build/outputs/apk/release/app-release-unsigned.apk
 
   release:
     needs: build
@@ -59,11 +50,6 @@ jobs:
         with:
           name: app-debug
 
-      - name: Download Release APK
-        uses: actions/download-artifact@v4
-        with:
-          name: app-release
-
       - name: Get version from tag
         id: version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
@@ -75,15 +61,14 @@ jobs:
           body: |
             ## Coffee Shop App v${{ steps.version.outputs.VERSION }}
 
-            ### Downloads
-            - **app-debug.apk** — Debug build (for testing)
-            - **app-release-unsigned.apk** — Release build (unsigned)
+            ### Download
+            Download `app-debug.apk` below and install on your Android device.
 
             ### What's New
-            See commits since last release: https://github.com/${{ github.repository }}/compare/${{ github.event.before }}...${{ github.ref_name}}
+            See commits since last release: https://github.com/${{ github.repository }}/compare/${{ github.event.before }}...${{ github.ref_name }}
 
             ### Setup
-            1. Download `app-debug.apk`
+            1. Download `app-debug.apk` from assets below
             2. Install on Android device (enable "Install from unknown sources")
             3. Login with admin credentials or create a new account
 
@@ -92,6 +77,5 @@ jobs:
             - **Paystack Test Card**: 4084084084084081, Exp: 12/26, CVV: 408
           files: |
             app-debug.apk
-            app-release-unsigned.apk
           draft: false
           prerelease: false
