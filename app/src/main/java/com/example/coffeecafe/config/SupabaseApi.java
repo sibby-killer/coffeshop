@@ -1,8 +1,10 @@
 package com.example.coffeecafe.config;
 
+import java.io.File;
 import java.io.IOException;
 
 import okhttp3.MediaType;
+import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -244,6 +246,55 @@ public class SupabaseApi {
                 throw new IOException("Edge function " + functionName + " failed: " + response.code() + " " + responseBody);
             }
             return responseBody;
+        }
+    }
+
+    /**
+     * Upload a file to Supabase Storage.
+     * @param bucket Storage bucket name (e.g. "products", "shops")
+     * @param filePath Local file path to upload
+     * @param upsert If true, overwrite existing file with same name
+     * @param token Bearer token for authorization
+     * @return Public URL of the uploaded file
+     */
+    public String uploadFile(String bucket, String filePath, boolean upsert, String token) throws IOException {
+        File file = new File(filePath);
+        if (!file.exists()) {
+            throw new IOException("File not found: " + filePath);
+        }
+
+        String fileName = file.getName();
+        String url = config.getSupabaseUrl() + "/storage/v1/object/" + bucket + "/" + fileName;
+
+        RequestBody fileBody = RequestBody.create(file, MediaType.parse("image/*"));
+
+        MultipartBody.Builder multipartBuilder = new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("file", fileName, fileBody);
+
+        RequestBody requestBody = multipartBuilder.build();
+
+        Request.Builder builder = new Request.Builder()
+                .url(url)
+                .post(requestBody)
+                .addHeader("apikey", config.getSupabaseKey())
+                .addHeader("Content-Type", "multipart/form-data");
+
+        if (token != null && !token.isEmpty()) {
+            builder.addHeader("Authorization", "Bearer " + token);
+        }
+        if (upsert) {
+            builder.addHeader("upsert", "true");
+        }
+
+        try (Response response = client.newCall(builder.build()).execute()) {
+            String responseBody = response.body() != null ? response.body().string() : "";
+            if (!response.isSuccessful()) {
+                throw new IOException("Upload failed: " + response.code() + " " + responseBody);
+            }
+
+            // Construct public URL
+            return config.getSupabaseUrl() + "/storage/v1/object/public/" + bucket + "/" + fileName;
         }
     }
 }

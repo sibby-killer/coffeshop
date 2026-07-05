@@ -1,12 +1,17 @@
 package com.example.coffeecafe.shopowner;
 
+import android.content.Intent;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -25,6 +30,7 @@ import com.example.coffeecafe.models.Product;
 import com.example.coffeecafe.utils.SessionManager;
 import com.google.gson.Gson;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,10 +38,16 @@ public class ProductsFragment extends Fragment {
     private RecyclerView recyclerView;
     private ProgressBar progressBar;
     private EditText productNameInput, productDescInput, productPriceInput, productCategoryInput, productQuantityInput;
-    private Button addProductButton;
+    private Button addProductButton, pickImageButton;
+    private ImageView productImagePreview;
+    private TextView imageStatusText;
     private ProductAdapter adapter;
     private List<Product> productList;
     private String shopId;
+    private Uri selectedImageUri;
+    private String uploadedImageUrl;
+
+    private static final int PICK_IMAGE_REQUEST = 1001;
 
     @Nullable
     @Override
@@ -55,6 +67,9 @@ public class ProductsFragment extends Fragment {
         productCategoryInput = view.findViewById(R.id.product_category_input);
         productQuantityInput = view.findViewById(R.id.product_quantity_input);
         addProductButton = view.findViewById(R.id.add_product_button);
+        pickImageButton = view.findViewById(R.id.pick_image_button);
+        productImagePreview = view.findViewById(R.id.product_image_preview);
+        imageStatusText = view.findViewById(R.id.image_status_text);
 
         productList = new ArrayList<>();
         adapter = new ProductAdapter(productList);
@@ -63,8 +78,39 @@ public class ProductsFragment extends Fragment {
         recyclerView.setAdapter(adapter);
 
         addProductButton.setOnClickListener(v -> addProduct());
+        pickImageButton.setOnClickListener(v -> openImagePicker());
 
         loadShopId();
+    }
+
+    private void openImagePicker() {
+        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        intent.setType("image/*");
+        startActivityForResult(Intent.createChooser(intent, "Select Product Image"), PICK_IMAGE_REQUEST);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == PICK_IMAGE_REQUEST && resultCode == getActivity().RESULT_OK && data != null && data.getData() != null) {
+            selectedImageUri = data.getData();
+            productImagePreview.setImageURI(selectedImageUri);
+            imageStatusText.setText("Image selected ✓");
+            imageStatusText.setTextColor(0xFF4CAF50);
+        }
+    }
+
+    private String getRealPathFromUri(Uri uri) {
+        String[] projection = {MediaStore.Images.Media.DATA};
+        Cursor cursor = getActivity().getContentResolver().query(uri, projection, null, null, null);
+        if (cursor != null) {
+            int colIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+            cursor.moveToFirst();
+            String path = cursor.getString(colIndex);
+            cursor.close();
+            return path;
+        }
+        return uri.getPath();
     }
 
     private void loadShopId() {
@@ -142,8 +188,19 @@ public class ProductsFragment extends Fragment {
 
         new Thread(() -> {
             try {
+                // Upload image if selected
+                String imageUrl = "";
+                if (selectedImageUri != null) {
+                    String filePath = getRealPathFromUri(selectedImageUri);
+                    if (filePath != null) {
+                        String token = AuthManager.getInstance(getContext()).getAccessToken();
+                        imageUrl = SupabaseApi.getInstance().uploadFile("products", filePath, true, token);
+                    }
+                }
+
                 Product product = new Product(name, desc, price, category.isEmpty() ? "general" : category, quantity);
                 product.setShopId(shopId);
+                product.setImageUrl(imageUrl);
 
                 String json = new Gson().toJson(product);
                 String token = AuthManager.getInstance(getContext()).getAccessToken();
@@ -159,6 +216,11 @@ public class ProductsFragment extends Fragment {
                         productPriceInput.setText("");
                         productCategoryInput.setText("");
                         productQuantityInput.setText("");
+                        productImagePreview.setImageResource(android.R.drawable.ic_menu_gallery);
+                        imageStatusText.setText("No image selected");
+                        imageStatusText.setTextColor(0xFF9E9E9E);
+                        selectedImageUri = null;
+                        uploadedImageUrl = null;
                         Toast.makeText(getContext(), "Product added!", Toast.LENGTH_SHORT).show();
                         loadProducts();
                     });

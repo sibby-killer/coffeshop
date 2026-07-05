@@ -78,6 +78,51 @@
                 android:background="@drawable/grid_bg"
                 android:padding="16dp">
 
+                <!-- Shop Logo Picker -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="12dp">
+
+                    <ImageView
+                        android:id="@+id/shop_logo_preview"
+                        android:layout_width="80dp"
+                        android:layout_height="80dp"
+                        android:scaleType="centerCrop"
+                        android:background="@drawable/edit_text_bg"
+                        android:src="@android:drawable/ic_menu_gallery"
+                        android:contentDescription="Shop logo" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:layout_marginStart="12dp">
+
+                        <Button
+                            android:id="@+id/pick_logo_button"
+                            android:layout_width="match_parent"
+                            android:layout_height="36dp"
+                            android:text="Choose Shop Logo"
+                            android:textAllCaps="false"
+                            android:textSize="13sp"
+                            android:textColor="@color/primary"
+                            android:background="@drawable/edit_text_bg" />
+
+                        <TextView
+                            android:id="@+id/logo_status_text"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="No logo selected"
+                            android:textSize="11sp"
+                            android:textColor="@color/text_muted"
+                            android:layout_marginTop="4dp" />
+                    </LinearLayout>
+                </LinearLayout>
+
                 <EditText
                     android:id="@+id/shop_name_input"
                     android:layout_width="match_parent"

@@ -1,11 +1,16 @@
 package com.example.coffeecafe.shopowner;
 
+import android.content.Intent;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -22,11 +27,16 @@ import com.google.gson.Gson;
 
 public class MyShopFragment extends Fragment {
     private EditText shopNameInput, descriptionInput, locationInput, phoneInput;
-    private Button saveButton;
+    private Button saveButton, pickLogoButton;
     private ProgressBar progressBar;
-    private TextView titleText;
+    private TextView titleText, logoStatusText;
+    private ImageView shopLogoPreview;
     private String shopId;
     private boolean shopExists = false;
+    private Uri selectedLogoUri;
+    private String currentImageUrl;
+
+    private static final int PICK_LOGO_REQUEST = 1002;
 
     @Nullable
     @Override
@@ -45,6 +55,9 @@ public class MyShopFragment extends Fragment {
         saveButton = view.findViewById(R.id.submit_button);
         progressBar = view.findViewById(R.id.progress_bar);
         titleText = view.findViewById(R.id.title);
+        pickLogoButton = view.findViewById(R.id.pick_logo_button);
+        shopLogoPreview = view.findViewById(R.id.shop_logo_preview);
+        logoStatusText = view.findViewById(R.id.logo_status_text);
 
         saveButton.setOnClickListener(v -> {
             if (shopExists) {
@@ -54,7 +67,39 @@ public class MyShopFragment extends Fragment {
             }
         });
 
+        pickLogoButton.setOnClickListener(v -> openLogoPicker());
+
         loadShopDetails();
+    }
+
+    private void openLogoPicker() {
+        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        intent.setType("image/*");
+        startActivityForResult(Intent.createChooser(intent, "Select Shop Logo"), PICK_LOGO_REQUEST);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == PICK_LOGO_REQUEST && resultCode == getActivity().RESULT_OK && data != null && data.getData() != null) {
+            selectedLogoUri = data.getData();
+            shopLogoPreview.setImageURI(selectedLogoUri);
+            logoStatusText.setText("Logo selected ✓");
+            logoStatusText.setTextColor(0xFF4CAF50);
+        }
+    }
+
+    private String getRealPathFromUri(Uri uri) {
+        String[] projection = {MediaStore.Images.Media.DATA};
+        Cursor cursor = getActivity().getContentResolver().query(uri, projection, null, null, null);
+        if (cursor != null) {
+            int colIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+            cursor.moveToFirst();
+            String path = cursor.getString(colIndex);
+            cursor.close();
+            return path;
+        }
+        return uri.getPath();
     }
 
     private void loadShopDetails() {
@@ -77,12 +122,19 @@ public class MyShopFragment extends Fragment {
                             shopExists = true;
                             ShopData shop = shops[0];
                             shopId = shop.id;
+                            currentImageUrl = shop.image_url;
                             titleText.setText("My Shop");
                             shopNameInput.setText(shop.name);
                             descriptionInput.setText(shop.description);
                             locationInput.setText(shop.location);
                             phoneInput.setText(shop.phone);
                             saveButton.setText("Update Shop");
+
+                            // Load existing logo if available
+                            if (shop.image_url != null && !shop.image_url.isEmpty()) {
+                                logoStatusText.setText("Current logo saved ✓");
+                                logoStatusText.setTextColor(0xFF4CAF50);
+                            }
                         } else {
                             shopExists = false;
                             titleText.setText("Create Your Shop");
@@ -121,12 +173,22 @@ public class MyShopFragment extends Fragment {
 
         new Thread(() -> {
             try {
+                // Upload logo if selected
+                String imageUrl = "";
+                if (selectedLogoUri != null) {
+                    String filePath = getRealPathFromUri(selectedLogoUri);
+                    if (filePath != null) {
+                        imageUrl = SupabaseApi.getInstance().uploadFile("shops", filePath, true, token);
+                    }
+                }
+
                 String json = "{" +
                         "\"owner_id\":\"" + escapeJson(userId) + "\"," +
                         "\"name\":\"" + escapeJson(name) + "\"," +
                         "\"description\":\"" + escapeJson(description) + "\"," +
                         "\"location\":\"" + escapeJson(location) + "\"," +
                         "\"phone\":\"" + escapeJson(phone) + "\"," +
+                        "\"image_url\":\"" + escapeJson(imageUrl) + "\"," +
                         "\"is_active\":true" +
                         "}";
 
@@ -172,10 +234,20 @@ public class MyShopFragment extends Fragment {
 
         new Thread(() -> {
             try {
+                // Upload new logo if selected
+                String imageUrl = currentImageUrl != null ? currentImageUrl : "";
+                if (selectedLogoUri != null) {
+                    String filePath = getRealPathFromUri(selectedLogoUri);
+                    if (filePath != null) {
+                        imageUrl = SupabaseApi.getInstance().uploadFile("shops", filePath, true, token);
+                    }
+                }
+
                 String updateJson = "{\"name\":\"" + escapeJson(name) +
                         "\",\"description\":\"" + escapeJson(description) +
                         "\",\"location\":\"" + escapeJson(location) +
-                        "\",\"phone\":\"" + escapeJson(phone) + "\"}";
+                        "\",\"phone\":\"" + escapeJson(phone) +
+                        "\",\"image_url\":\"" + escapeJson(imageUrl) + "\"}";
 
                 SupabaseApi.getInstance().patch("shops", "id=eq." + shopId, updateJson, token);
 
@@ -204,6 +276,6 @@ public class MyShopFragment extends Fragment {
     }
 
     private static class ShopData {
-        String id, name, description, location, phone;
+        String id, name, description, location, phone, image_url;
     }
 }

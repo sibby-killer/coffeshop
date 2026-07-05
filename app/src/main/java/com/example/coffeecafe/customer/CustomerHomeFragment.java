@@ -1,5 +1,7 @@
 package com.example.coffeecafe.customer;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -9,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -24,6 +27,8 @@ import com.example.coffeecafe.config.SupabaseApi;
 import com.example.coffeecafe.models.Shop;
 import com.google.gson.Gson;
 
+import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -190,6 +195,14 @@ public class CustomerHomeFragment extends Fragment {
             holder.shopName.setText(shop.getName());
             holder.shopLocation.setText(shop.getLocation());
             holder.shopDescription.setText(shop.getDescription());
+
+            // Load shop logo if available
+            if (shop.getImageUrl() != null && !shop.getImageUrl().isEmpty()) {
+                loadShopImage(shop.getImageUrl(), holder.shopLogo);
+            } else {
+                holder.shopLogo.setImageResource(R.drawable.ic_shop);
+            }
+
             holder.itemView.setOnClickListener(v -> listener.onShopClick(shop));
         }
 
@@ -200,13 +213,29 @@ public class CustomerHomeFragment extends Fragment {
 
         class ShopViewHolder extends RecyclerView.ViewHolder {
             TextView shopName, shopLocation, shopDescription;
+            ImageView shopLogo;
 
             ShopViewHolder(@NonNull View itemView) {
                 super(itemView);
                 shopName = itemView.findViewById(R.id.shop_name);
                 shopLocation = itemView.findViewById(R.id.shop_location);
                 shopDescription = itemView.findViewById(R.id.shop_description);
+                shopLogo = itemView.findViewById(R.id.shop_logo);
             }
         }
+    }
+
+    private void loadShopImage(String imageUrl, ImageView imageView) {
+        new Thread(() -> {
+            try {
+                InputStream in = new URL(imageUrl).openStream();
+                Bitmap bitmap = BitmapFactory.decodeStream(in);
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> imageView.setImageBitmap(bitmap));
+                }
+            } catch (Exception e) {
+                // Keep default icon on failure
+            }
+        }).start();
     }
 }

@@ -30,13 +30,17 @@ import com.example.coffeecafe.shopowner.ShopDashboardFragment;
 import com.example.coffeecafe.shopowner.ShopOrdersFragment;
 import com.example.coffeecafe.shopowner.ShopSalesFragment;
 import com.example.coffeecafe.shopowner.WithdrawFragment;
+import com.example.coffeecafe.config.SupabaseApi;
 import com.example.coffeecafe.utils.CartManager;
+import com.example.coffeecafe.utils.SessionManager;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.gson.Gson;
 
 public class DashBoard extends AppCompatActivity {
     private BottomNavigationView bottomNavigationView;
     private String userRole;
     private TextView cartBadgeTextView;
+    private TextView orderBadgeTextView;
     private CartManager.CartUpdateListener cartListener;
 
     @Override
@@ -129,8 +133,10 @@ public class DashBoard extends AppCompatActivity {
         // Load default fragment
         if (userRole.equals("admin")) {
             bottomNavigationView.setSelectedItemId(R.id.nav_dashboard);
+            setupOrderBadge(R.id.nav_dashboard);
         } else if (userRole.equals("shop_owner")) {
             bottomNavigationView.setSelectedItemId(R.id.nav_dashboard);
+            setupOrderBadge(R.id.nav_orders);
         } else {
             bottomNavigationView.setSelectedItemId(R.id.nav_home);
             setupCartBadge();
@@ -231,10 +237,92 @@ public class DashBoard extends AppCompatActivity {
         }
     }
 
+    private void setupOrderBadge(int menuItemId) {
+        bottomNavigationView.post(() -> {
+            View menuItem = bottomNavigationView.findViewById(menuItemId);
+            if (menuItem == null) return;
+
+            orderBadgeTextView = new TextView(this);
+            orderBadgeTextView.setBackgroundResource(R.drawable.bg_cart_badge);
+            orderBadgeTextView.setTextColor(0xFFFFFFFF);
+            orderBadgeTextView.setTextSize(10);
+            orderBadgeTextView.setTypeface(null, Typeface.BOLD);
+            orderBadgeTextView.setGravity(Gravity.CENTER);
+            orderBadgeTextView.setVisibility(View.GONE);
+
+            int badgeSize = (int) (18 * getResources().getDisplayMetrics().density + 0.5f);
+            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(badgeSize, badgeSize);
+            params.gravity = Gravity.TOP | Gravity.END;
+            params.topMargin = 4;
+            params.rightMargin = 4;
+
+            if (menuItem.getParent() instanceof ViewGroup) {
+                ViewGroup parent = (ViewGroup) menuItem.getParent();
+                parent.addView(orderBadgeTextView, params);
+            }
+
+            loadOrderCount();
+        });
+    }
+
+    private void loadOrderCount() {
+        if (orderBadgeTextView == null) return;
+
+        new Thread(() -> {
+            try {
+                String token = AuthManager.getInstance(this).getAccessToken();
+                int count = 0;
+
+                if (userRole.equals("shop_owner")) {
+                    // Count pending/paid orders for this shop owner's shop
+                    String userId = SessionManager.getInstance(this).getUserId();
+                    String shopQuery = "select=id&owner_id=eq." + userId + "&limit=1";
+                    String shopResp = SupabaseApi.getInstance().get("shops", shopQuery, token);
+                    ShopId[] shops = new Gson().fromJson(shopResp, ShopId[].class);
+                    if (shops != null && shops.length > 0) {
+                        String shopId = shops[0].id;
+                        String orderQuery = "select=id&shop_id=eq." + shopId + "&status=in.(pending,paid)&order=created_at.desc";
+                        String orderResp = SupabaseApi.getInstance().get("orders", orderQuery, token);
+                        OrderId[] orders = new Gson().fromJson(orderResp, OrderId[].class);
+                        count = orders != null ? orders.length : 0;
+                    }
+                } else if (userRole.equals("admin")) {
+                    // Count all pending/paid orders across all shops
+                    String orderQuery = "select=id&status=in.(pending,paid)&order=created_at.desc";
+                    String orderResp = SupabaseApi.getInstance().get("orders", orderQuery, token);
+                    OrderId[] orders = new Gson().fromJson(orderResp, OrderId[].class);
+                    count = orders != null ? orders.length : 0;
+                }
+
+                final int finalCount = count;
+                runOnUiThread(() -> {
+                    if (orderBadgeTextView == null) return;
+                    if (finalCount > 0) {
+                        orderBadgeTextView.setText(finalCount > 99 ? "99+" : String.valueOf(finalCount));
+                        orderBadgeTextView.setVisibility(View.VISIBLE);
+                    } else {
+                        orderBadgeTextView.setVisibility(View.GONE);
+                    }
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    private static class ShopId {
+        String id;
+    }
+
+    private static class OrderId {
+        String id;
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
         updateCartBadgeCount();
+        loadOrderCount();
     }
 
     @Override
