@@ -162,16 +162,13 @@ public class DashBoard extends AppCompatActivity {
         menu.add(0, R.id.nav_orders, 2, "Orders")
                 .setIcon(ContextCompat.getDrawable(this, R.drawable.ic_orders))
                 .setCheckable(true);
-        menu.add(0, R.id.nav_sales, 3, "Sales")
-                .setIcon(ContextCompat.getDrawable(this, R.drawable.ic_orders))
+        menu.add(0, R.id.nav_myshop, 3, "My Shop")
+                .setIcon(ContextCompat.getDrawable(this, R.drawable.ic_my_shop))
                 .setCheckable(true);
         menu.add(0, R.id.nav_withdraw, 4, "Withdraw")
                 .setIcon(ContextCompat.getDrawable(this, R.drawable.ic_profile))
                 .setCheckable(true);
-        menu.add(0, R.id.nav_myshop, 5, "My Shop")
-                .setIcon(ContextCompat.getDrawable(this, R.drawable.ic_my_shop))
-                .setCheckable(true);
-        menu.add(0, R.id.nav_profile, 6, "Profile")
+        menu.add(0, R.id.nav_profile, 5, "Profile")
                 .setIcon(ContextCompat.getDrawable(this, R.drawable.ic_profile))
                 .setCheckable(true);
     }
