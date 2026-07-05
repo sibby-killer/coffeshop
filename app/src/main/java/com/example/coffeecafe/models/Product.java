@@ -21,6 +21,9 @@ public class Product {
     @SerializedName("category")
     private String category;
 
+    @SerializedName("quantity")
+    private int quantity;
+
     @SerializedName("image_url")
     private String imageUrl;
 
@@ -41,6 +44,16 @@ public class Product {
         this.price = price;
         this.category = category;
         this.isAvailable = true;
+        this.quantity = 0;
+    }
+
+    public Product(String name, String description, double price, String category, int quantity) {
+        this.name = name;
+        this.description = description;
+        this.price = price;
+        this.category = category;
+        this.isAvailable = true;
+        this.quantity = quantity;
     }
 
     public String getId() { return id; }
@@ -60,6 +73,9 @@ public class Product {
 
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
+
+    public int getQuantity() { return quantity; }
+    public void setQuantity(int quantity) { this.quantity = quantity; }
 
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }

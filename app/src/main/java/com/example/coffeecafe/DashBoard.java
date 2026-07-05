@@ -1,15 +1,22 @@
 package com.example.coffeecafe;
 
+import android.graphics.Typeface;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.FrameLayout;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.coffeecafe.admin.AdminDashboardFragment;
+import com.example.coffeecafe.admin.AdminSalesFragment;
+import com.example.coffeecafe.admin.AdminWithdrawalsFragment;
 import com.example.coffeecafe.admin.ManageShopsFragment;
 import com.example.coffeecafe.admin.ManageUsersFragment;
 import com.example.coffeecafe.auth.AuthManager;
@@ -21,11 +28,16 @@ import com.example.coffeecafe.shopowner.MyShopFragment;
 import com.example.coffeecafe.shopowner.ProductsFragment;
 import com.example.coffeecafe.shopowner.ShopDashboardFragment;
 import com.example.coffeecafe.shopowner.ShopOrdersFragment;
+import com.example.coffeecafe.shopowner.ShopSalesFragment;
+import com.example.coffeecafe.shopowner.WithdrawFragment;
+import com.example.coffeecafe.utils.CartManager;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class DashBoard extends AppCompatActivity {
     private BottomNavigationView bottomNavigationView;
     private String userRole;
+    private TextView cartBadgeTextView;
+    private CartManager.CartUpdateListener cartListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,10 +82,10 @@ public class DashBoard extends AppCompatActivity {
             if (userRole.equals("admin")) {
                 if (itemId == R.id.nav_dashboard) {
                     fragment = new AdminDashboardFragment();
-                } else if (itemId == R.id.nav_shops) {
-                    fragment = new ManageShopsFragment();
-                } else if (itemId == R.id.nav_users) {
-                    fragment = new ManageUsersFragment();
+                } else if (itemId == R.id.nav_sales) {
+                    fragment = new AdminSalesFragment();
+                } else if (itemId == R.id.nav_withdraw) {
+                    fragment = new AdminWithdrawalsFragment();
                 } else if (itemId == R.id.nav_profile) {
                     fragment = new ProfileFragment();
                 }
@@ -84,6 +96,10 @@ public class DashBoard extends AppCompatActivity {
                     fragment = new ProductsFragment();
                 } else if (itemId == R.id.nav_orders) {
                     fragment = new ShopOrdersFragment();
+                } else if (itemId == R.id.nav_sales) {
+                    fragment = new ShopSalesFragment();
+                } else if (itemId == R.id.nav_withdraw) {
+                    fragment = new WithdrawFragment();
                 } else if (itemId == R.id.nav_myshop) {
                     fragment = new MyShopFragment();
                 } else if (itemId == R.id.nav_profile) {
@@ -117,6 +133,7 @@ public class DashBoard extends AppCompatActivity {
             bottomNavigationView.setSelectedItemId(R.id.nav_dashboard);
         } else {
             bottomNavigationView.setSelectedItemId(R.id.nav_home);
+            setupCartBadge();
         }
     }
 
@@ -124,11 +141,11 @@ public class DashBoard extends AppCompatActivity {
         menu.add(0, R.id.nav_dashboard, 0, "Dashboard")
                 .setIcon(ContextCompat.getDrawable(this, R.drawable.ic_dashboard))
                 .setCheckable(true);
-        menu.add(0, R.id.nav_shops, 1, "Shops")
-                .setIcon(ContextCompat.getDrawable(this, R.drawable.ic_shop))
+        menu.add(0, R.id.nav_sales, 1, "Sales")
+                .setIcon(ContextCompat.getDrawable(this, R.drawable.ic_orders))
                 .setCheckable(true);
-        menu.add(0, R.id.nav_users, 2, "Users")
-                .setIcon(ContextCompat.getDrawable(this, R.drawable.ic_admin_create))
+        menu.add(0, R.id.nav_withdraw, 2, "Withdrawals")
+                .setIcon(ContextCompat.getDrawable(this, R.drawable.ic_profile))
                 .setCheckable(true);
         menu.add(0, R.id.nav_profile, 3, "Profile")
                 .setIcon(ContextCompat.getDrawable(this, R.drawable.ic_profile))
@@ -145,10 +162,16 @@ public class DashBoard extends AppCompatActivity {
         menu.add(0, R.id.nav_orders, 2, "Orders")
                 .setIcon(ContextCompat.getDrawable(this, R.drawable.ic_orders))
                 .setCheckable(true);
-        menu.add(0, R.id.nav_myshop, 3, "My Shop")
+        menu.add(0, R.id.nav_sales, 3, "Sales")
+                .setIcon(ContextCompat.getDrawable(this, R.drawable.ic_orders))
+                .setCheckable(true);
+        menu.add(0, R.id.nav_withdraw, 4, "Withdraw")
+                .setIcon(ContextCompat.getDrawable(this, R.drawable.ic_profile))
+                .setCheckable(true);
+        menu.add(0, R.id.nav_myshop, 5, "My Shop")
                 .setIcon(ContextCompat.getDrawable(this, R.drawable.ic_my_shop))
                 .setCheckable(true);
-        menu.add(0, R.id.nav_profile, 4, "Profile")
+        menu.add(0, R.id.nav_profile, 6, "Profile")
                 .setIcon(ContextCompat.getDrawable(this, R.drawable.ic_profile))
                 .setCheckable(true);
     }
@@ -166,5 +189,62 @@ public class DashBoard extends AppCompatActivity {
         menu.add(0, R.id.nav_profile, 3, "Profile")
                 .setIcon(ContextCompat.getDrawable(this, R.drawable.ic_profile))
                 .setCheckable(true);
+    }
+
+    private void setupCartBadge() {
+        CartManager cartManager = CartManager.getInstance(this);
+
+        bottomNavigationView.post(() -> {
+            View cartItem = bottomNavigationView.findViewById(R.id.nav_cart);
+            if (cartItem == null) return;
+
+            cartBadgeTextView = new TextView(this);
+            cartBadgeTextView.setBackgroundResource(R.drawable.bg_cart_badge);
+            cartBadgeTextView.setTextColor(0xFFFFFFFF);
+            cartBadgeTextView.setTextSize(10);
+            cartBadgeTextView.setTypeface(null, Typeface.BOLD);
+            cartBadgeTextView.setGravity(Gravity.CENTER);
+            cartBadgeTextView.setVisibility(View.GONE);
+
+            int badgeSize = (int) (18 * getResources().getDisplayMetrics().density + 0.5f);
+            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(badgeSize, badgeSize);
+            params.gravity = Gravity.TOP | Gravity.END;
+            params.topMargin = 4;
+            params.rightMargin = 4;
+
+            if (cartItem.getParent() instanceof ViewGroup) {
+                ViewGroup parent = (ViewGroup) cartItem.getParent();
+                parent.addView(cartBadgeTextView, params);
+            }
+
+            cartListener = (items, total) -> updateCartBadgeCount();
+            cartManager.setCartUpdateListener(cartListener);
+            updateCartBadgeCount();
+        });
+    }
+
+    private void updateCartBadgeCount() {
+        if (cartBadgeTextView == null) return;
+        int count = CartManager.getInstance(this).getCartCount();
+        if (count > 0) {
+            cartBadgeTextView.setText(count > 99 ? "99+" : String.valueOf(count));
+            cartBadgeTextView.setVisibility(View.VISIBLE);
+        } else {
+            cartBadgeTextView.setVisibility(View.GONE);
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        updateCartBadgeCount();
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (cartListener != null) {
+            CartManager.getInstance(this).setCartUpdateListener(null);
+        }
+        super.onDestroy();
     }
 }

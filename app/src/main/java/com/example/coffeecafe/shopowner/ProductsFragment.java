@@ -6,12 +6,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -29,7 +31,7 @@ import java.util.List;
 public class ProductsFragment extends Fragment {
     private RecyclerView recyclerView;
     private ProgressBar progressBar;
-    private EditText productNameInput, productDescInput, productPriceInput, productCategoryInput;
+    private EditText productNameInput, productDescInput, productPriceInput, productCategoryInput, productQuantityInput;
     private Button addProductButton;
     private ProductAdapter adapter;
     private List<Product> productList;
@@ -51,6 +53,7 @@ public class ProductsFragment extends Fragment {
         productDescInput = view.findViewById(R.id.product_desc_input);
         productPriceInput = view.findViewById(R.id.product_price_input);
         productCategoryInput = view.findViewById(R.id.product_category_input);
+        productQuantityInput = view.findViewById(R.id.product_quantity_input);
         addProductButton = view.findViewById(R.id.add_product_button);
 
         productList = new ArrayList<>();
@@ -124,6 +127,7 @@ public class ProductsFragment extends Fragment {
         String desc = productDescInput.getText().toString().trim();
         String priceStr = productPriceInput.getText().toString().trim();
         String category = productCategoryInput.getText().toString().trim();
+        String quantityStr = productQuantityInput.getText().toString().trim();
 
         if (name.isEmpty() || priceStr.isEmpty()) {
             Toast.makeText(getContext(), "Name and price required", Toast.LENGTH_SHORT).show();
@@ -131,13 +135,14 @@ public class ProductsFragment extends Fragment {
         }
 
         double price = Double.parseDouble(priceStr);
+        int quantity = quantityStr.isEmpty() ? 0 : Integer.parseInt(quantityStr);
 
         progressBar.setVisibility(View.VISIBLE);
         addProductButton.setEnabled(false);
 
         new Thread(() -> {
             try {
-                Product product = new Product(name, desc, price, category.isEmpty() ? "general" : category);
+                Product product = new Product(name, desc, price, category.isEmpty() ? "general" : category, quantity);
                 product.setShopId(shopId);
 
                 String json = new Gson().toJson(product);
@@ -153,6 +158,7 @@ public class ProductsFragment extends Fragment {
                         productDescInput.setText("");
                         productPriceInput.setText("");
                         productCategoryInput.setText("");
+                        productQuantityInput.setText("");
                         Toast.makeText(getContext(), "Product added!", Toast.LENGTH_SHORT).show();
                         loadProducts();
                     });
@@ -169,6 +175,37 @@ public class ProductsFragment extends Fragment {
         }).start();
     }
 
+    private void deleteProduct(String productId) {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Delete Product")
+                .setMessage("Are you sure you want to delete this product?")
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    progressBar.setVisibility(View.VISIBLE);
+                    String token = AuthManager.getInstance(getContext()).getAccessToken();
+                    new Thread(() -> {
+                        try {
+                            SupabaseApi.getInstance().delete("products", "id=eq." + productId, token);
+                            if (getActivity() != null) {
+                                getActivity().runOnUiThread(() -> {
+                                    progressBar.setVisibility(View.GONE);
+                                    Toast.makeText(getContext(), "Product deleted", Toast.LENGTH_SHORT).show();
+                                    loadProducts();
+                                });
+                            }
+                        } catch (Exception e) {
+                            if (getActivity() != null) {
+                                getActivity().runOnUiThread(() -> {
+                                    progressBar.setVisibility(View.GONE);
+                                    Toast.makeText(getContext(), "Delete failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                });
+                            }
+                        }
+                    }).start();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
     private static class ShopId {
         String id;
     }
@@ -183,7 +220,7 @@ public class ProductsFragment extends Fragment {
         @NonNull
         @Override
         public ProductViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_layout, parent, false);
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_product_manage, parent, false);
             return new ProductViewHolder(view);
         }
 
@@ -192,7 +229,9 @@ public class ProductsFragment extends Fragment {
             Product product = products.get(position);
             holder.name.setText(product.getName());
             holder.price.setText(String.format("KES %.0f", product.getPrice()));
+            holder.quantity.setText("Stock: " + product.getQuantity());
             holder.description.setText(product.getDescription());
+            holder.btnDelete.setOnClickListener(v -> deleteProduct(product.getId()));
         }
 
         @Override
@@ -201,13 +240,16 @@ public class ProductsFragment extends Fragment {
         }
 
         class ProductViewHolder extends RecyclerView.ViewHolder {
-            TextView name, price, description;
+            TextView name, price, quantity, description;
+            ImageButton btnDelete;
 
             ProductViewHolder(@NonNull View itemView) {
                 super(itemView);
-                name = itemView.findViewById(R.id.shop_name);
-                price = itemView.findViewById(R.id.shop_location);
-                description = itemView.findViewById(R.id.shop_description);
+                name = itemView.findViewById(R.id.product_name);
+                price = itemView.findViewById(R.id.product_price);
+                quantity = itemView.findViewById(R.id.product_quantity);
+                description = itemView.findViewById(R.id.product_description);
+                btnDelete = itemView.findViewById(R.id.btn_delete_product);
             }
         }
     }
