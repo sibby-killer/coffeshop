@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.coffeecafe.R;
+import com.example.coffeecafe.auth.AuthManager;
 import com.example.coffeecafe.config.SupabaseApi;
 import com.example.coffeecafe.models.Product;
 import com.example.coffeecafe.utils.SessionManager;
@@ -65,10 +66,11 @@ public class ProductsFragment extends Fragment {
 
     private void loadShopId() {
         String userId = SessionManager.getInstance(getContext()).getUserId();
+        String token = AuthManager.getInstance(getContext()).getAccessToken();
         new Thread(() -> {
             try {
                 String query = "select=id&owner_id=eq." + userId + "&limit=1";
-                String response = SupabaseApi.getInstance().get("shops", query);
+                String response = SupabaseApi.getInstance().get("shops", query, token);
 
                 Gson gson = new Gson();
                 ShopId[] shops = gson.fromJson(response, ShopId[].class);
@@ -87,11 +89,12 @@ public class ProductsFragment extends Fragment {
     private void loadProducts() {
         if (shopId == null) return;
         progressBar.setVisibility(View.VISIBLE);
+        String token = AuthManager.getInstance(getContext()).getAccessToken();
 
         new Thread(() -> {
             try {
                 String query = "select=*&shop_id=eq." + shopId + "&order=created_at.desc";
-                String response = SupabaseApi.getInstance().get("products", query);
+                String response = SupabaseApi.getInstance().get("products", query, token);
 
                 Gson gson = new Gson();
                 Product[] products = gson.fromJson(response, Product[].class);
@@ -138,8 +141,9 @@ public class ProductsFragment extends Fragment {
                 product.setShopId(shopId);
 
                 String json = new Gson().toJson(product);
+                String token = AuthManager.getInstance(getContext()).getAccessToken();
 
-                SupabaseApi.getInstance().post("products", json, null);
+                SupabaseApi.getInstance().post("products", json, token);
 
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
@@ -187,7 +191,7 @@ public class ProductsFragment extends Fragment {
         public void onBindViewHolder(@NonNull ProductViewHolder holder, int position) {
             Product product = products.get(position);
             holder.name.setText(product.getName());
-            holder.price.setText(String.format("$%.2f", product.getPrice()));
+            holder.price.setText(String.format("KES %.0f", product.getPrice()));
             holder.description.setText(product.getDescription());
         }
 

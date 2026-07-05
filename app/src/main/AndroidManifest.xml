@@ -32,7 +32,8 @@
             android:exported="false" />
         <activity
             android:name=".DashBoard"
-            android:exported="false" />
+            android:exported="false"
+            android:hardwareAccelerated="true" />
         <activity
             android:name=".customer.CheckoutActivity"
             android:exported="false" />

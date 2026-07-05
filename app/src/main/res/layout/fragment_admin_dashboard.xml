@@ -4,6 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background"
+    android:fitsSystemWindows="true"
     android:fillViewport="true">
 
     <LinearLayout
@@ -17,16 +18,31 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:background="@color/primary"
-            android:padding="20dp">
+            android:padding="20dp"
+            android:paddingTop="32dp">
 
-            <TextView
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Admin Dashboard"
-                android:textSize="22sp"
-                android:textStyle="bold"
-                android:textColor="@color/white"
-                android:fontFamily="@font/poppins_regular" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:src="@drawable/ic_admin_create"
+                    android:tint="@color/white"
+                    android:layout_marginEnd="12dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Admin Dashboard"
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/white"
+                    android:fontFamily="@font/poppins_regular" />
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/admin_welcome"
@@ -35,7 +51,7 @@
                 android:text="Welcome, Admin"
                 android:textSize="14sp"
                 android:textColor="#D0C0B0"
-                android:layout_marginTop="2dp" />
+                android:layout_marginTop="4dp" />
         </LinearLayout>
 
         <LinearLayout
@@ -50,7 +66,9 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
 
+                <!-- Total Users Card -->
                 <LinearLayout
+                    android:id="@+id/card_users"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -58,12 +76,32 @@
                     android:gravity="center"
                     android:padding="16dp"
                     android:background="@drawable/grid_bg"
-                    android:layout_marginEnd="6dp">
-                    <TextView android:id="@+id/total_users" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0" android:textSize="28sp" android:textStyle="bold" android:textColor="@color/primary" />
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Total Users" android:textSize="12sp" android:textColor="@color/text_muted" />
+                    android:layout_marginEnd="6dp"
+                    android:clickable="true"
+                    android:focusable="true">
+                    <ImageView
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:src="@drawable/ic_admin_create"
+                        android:tint="@color/primary" />
+                    <TextView android:id="@+id/total_users"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        android:textSize="28sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/primary"
+                        android:layout_marginTop="4dp" />
+                    <TextView android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Total Users"
+                        android:textSize="12sp"
+                        android:textColor="@color/text_muted" />
                 </LinearLayout>
 
+                <!-- Active Shops Card -->
                 <LinearLayout
+                    android:id="@+id/card_shops"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -71,9 +109,27 @@
                     android:gravity="center"
                     android:padding="16dp"
                     android:background="@drawable/grid_bg"
-                    android:layout_marginStart="6dp">
-                    <TextView android:id="@+id/total_shops" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0" android:textSize="28sp" android:textStyle="bold" android:textColor="@color/primary" />
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Active Shops" android:textSize="12sp" android:textColor="@color/text_muted" />
+                    android:layout_marginStart="6dp"
+                    android:clickable="true"
+                    android:focusable="true">
+                    <ImageView
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:src="@drawable/ic_shop"
+                        android:tint="@color/primary" />
+                    <TextView android:id="@+id/total_shops"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        android:textSize="28sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/primary"
+                        android:layout_marginTop="4dp" />
+                    <TextView android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Active Shops"
+                        android:textSize="12sp"
+                        android:textColor="@color/text_muted" />
                 </LinearLayout>
             </LinearLayout>
 
@@ -83,7 +139,9 @@
                 android:orientation="horizontal"
                 android:layout_marginTop="12dp">
 
+                <!-- Total Orders Card -->
                 <LinearLayout
+                    android:id="@+id/card_orders"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -91,11 +149,30 @@
                     android:gravity="center"
                     android:padding="16dp"
                     android:background="@drawable/grid_bg"
-                    android:layout_marginEnd="6dp">
-                    <TextView android:id="@+id/pending_apps" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0" android:textSize="28sp" android:textStyle="bold" android:textColor="@color/warning" />
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Pending Applications" android:textSize="12sp" android:textColor="@color/text_muted" />
+                    android:layout_marginEnd="6dp"
+                    android:clickable="true"
+                    android:focusable="true">
+                    <ImageView
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:src="@drawable/ic_orders"
+                        android:tint="@color/success" />
+                    <TextView android:id="@+id/total_orders"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        android:textSize="28sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/success"
+                        android:layout_marginTop="4dp" />
+                    <TextView android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Total Orders"
+                        android:textSize="12sp"
+                        android:textColor="@color/text_muted" />
                 </LinearLayout>
 
+                <!-- Total Products Card -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -105,8 +182,96 @@
                     android:padding="16dp"
                     android:background="@drawable/grid_bg"
                     android:layout_marginStart="6dp">
-                    <TextView android:id="@+id/total_orders" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0" android:textSize="28sp" android:textStyle="bold" android:textColor="@color/success" />
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Total Orders" android:textSize="12sp" android:textColor="@color/text_muted" />
+                    <ImageView
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:src="@drawable/ic_products"
+                        android:tint="@color/accent" />
+                    <TextView android:id="@+id/pending_apps"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        android:textSize="28sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/accent"
+                        android:layout_marginTop="4dp" />
+                    <TextView android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Total Products"
+                        android:textSize="12sp"
+                        android:textColor="@color/text_muted" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Quick Actions -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Quick Actions"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:fontFamily="@font/poppins_regular"
+                android:layout_marginTop="24dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp">
+
+                <!-- Manage Shops -->
+                <LinearLayout
+                    android:id="@+id/action_manage_shops"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="12dp"
+                    android:background="@drawable/grid_bg"
+                    android:layout_marginEnd="6dp"
+                    android:clickable="true"
+                    android:focusable="true">
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_shop"
+                        android:tint="@color/primary" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Shops"
+                        android:textSize="12sp"
+                        android:textColor="@color/text_primary"
+                        android:layout_marginTop="4dp" />
+                </LinearLayout>
+
+                <!-- Manage Users -->
+                <LinearLayout
+                    android:id="@+id/action_review_apps"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="12dp"
+                    android:background="@drawable/grid_bg"
+                    android:layout_marginStart="6dp"
+                    android:clickable="true"
+                    android:focusable="true">
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_admin_create"
+                        android:tint="@color/warning" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Users"
+                        android:textSize="12sp"
+                        android:textColor="@color/text_primary"
+                        android:layout_marginTop="4dp" />
                 </LinearLayout>
             </LinearLayout>
 

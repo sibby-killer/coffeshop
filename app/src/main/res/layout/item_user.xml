@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="10dp"
+    app:cardCornerRadius="14dp"
+    app:cardElevation="2dp"
+    app:cardBackgroundColor="@color/surface"
+    app:strokeWidth="0dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="14dp">
+
+        <!-- Top row: name + role badge -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/user_name"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="User Name"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary" />
+
+            <TextView
+                android:id="@+id/user_role"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Customer"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:textColor="@color/surface"
+                android:background="@drawable/btn_bg"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="3dp" />
+        </LinearLayout>
+
+        <!-- Email -->
+        <TextView
+            android:id="@+id/user_email"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="user@email.com"
+            android:textSize="13sp"
+            android:textColor="@color/text_muted"
+            android:layout_marginTop="4dp" />
+
+        <!-- Phone -->
+        <TextView
+            android:id="@+id/user_phone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Phone: 0700000000"
+            android:textSize="13sp"
+            android:textColor="@color/text_muted"
+            android:layout_marginTop="2dp" />
+
+        <!-- Edit section (hidden by default) -->
+        <LinearLayout
+            android:id="@+id/edit_section"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:layout_marginTop="10dp">
+
+            <EditText
+                android:id="@+id/edit_name_input"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:hint="Full Name"
+                android:textSize="13sp"
+                android:textColorHint="@color/text_hint"
+                android:textColor="@color/text_primary"
+                android:paddingHorizontal="12dp"
+                android:background="@drawable/edit_text_bg" />
+
+            <EditText
+                android:id="@+id/edit_phone_input"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:hint="Phone"
+                android:inputType="phone"
+                android:textSize="13sp"
+                android:textColorHint="@color/text_hint"
+                android:textColor="@color/text_primary"
+                android:paddingHorizontal="12dp"
+                android:background="@drawable/edit_text_bg"
+                android:layout_marginTop="6dp" />
+
+            <Spinner
+                android:id="@+id/edit_role_spinner"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:background="@drawable/edit_text_bg"
+                android:layout_marginTop="6dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp">
+
+                <Button
+                    android:id="@+id/save_user_btn"
+                    android:layout_width="0dp"
+                    android:layout_height="36dp"
+                    android:layout_weight="1"
+                    android:text="Save"
+                    android:textAllCaps="false"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_on_primary"
+                    android:background="@drawable/btn_bg"
+                    android:layout_marginEnd="4dp" />
+
+                <Button
+                    android:id="@+id/cancel_edit_btn"
+                    android:layout_width="0dp"
+                    android:layout_height="36dp"
+                    android:layout_weight="1"
+                    android:text="Cancel"
+                    android:textAllCaps="false"
+                    android:textSize="13sp"
+                    android:textColor="@color/error"
+                    android:background="@drawable/cancel_btn_bg"
+                    android:layout_marginStart="4dp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Action buttons (shown when not editing) -->
+        <LinearLayout
+            android:id="@+id/action_buttons"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="10dp">
+
+            <Button
+                android:id="@+id/edit_user_btn"
+                android:layout_width="0dp"
+                android:layout_height="36dp"
+                android:layout_weight="1"
+                android:text="Edit"
+                android:textAllCaps="false"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_on_primary"
+                android:background="@drawable/btn_bg"
+                android:layout_marginEnd="4dp" />
+
+            <Button
+                android:id="@+id/delete_user_btn"
+                android:layout_width="0dp"
+                android:layout_height="36dp"
+                android:layout_weight="1"
+                android:text="Delete"
+                android:textAllCaps="false"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:textColor="@color/white"
+                android:background="@drawable/cancel_btn_bg"
+                android:layout_marginStart="4dp" />
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

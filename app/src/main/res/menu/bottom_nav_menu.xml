@@ -31,6 +31,9 @@
         android:id="@+id/nav_create_admin"
         android:title="Create Admin" />
     <item
+        android:id="@+id/nav_users"
+        android:title="Users" />
+    <item
         android:id="@+id/nav_profile"
         android:title="Profile" />
 </menu>

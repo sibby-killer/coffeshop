@@ -11,6 +11,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -49,12 +50,22 @@ public class ApplicationsFragment extends Fragment {
         adapter = new ApplicationAdapter(applicationList, new ApplicationAdapter.OnApplicationActionListener() {
             @Override
             public void onApprove(ShopApplication app) {
-                updateApplicationStatus(app.getId(), "approved");
+                new AlertDialog.Builder(getContext())
+                        .setTitle("Approve Application")
+                        .setMessage("Approve \"" + app.getShopName() + "\"?\n\nThis will create the shop and allow the owner to add products.")
+                        .setPositiveButton("Approve", (d, w) -> updateApplicationStatus(app.getId(), "approved"))
+                        .setNegativeButton("Cancel", null)
+                        .show();
             }
 
             @Override
             public void onReject(ShopApplication app) {
-                updateApplicationStatus(app.getId(), "rejected");
+                new AlertDialog.Builder(getContext())
+                        .setTitle("Reject Application")
+                        .setMessage("Reject \"" + app.getShopName() + "\"?")
+                        .setPositiveButton("Reject", (d, w) -> updateApplicationStatus(app.getId(), "rejected"))
+                        .setNegativeButton("Cancel", null)
+                        .show();
             }
         });
 
@@ -77,7 +88,7 @@ public class ApplicationsFragment extends Fragment {
 
         new Thread(() -> {
             try {
-                String query = "select=*,profiles(full_name)&order=created_at.desc";
+                String query = "select=*,profiles!shop_applications_owner_id_fkey(full_name)&order=created_at.desc";
                 String response = SupabaseApi.getInstance().get("shop_applications", query, token);
 
                 Gson gson = new Gson();
@@ -86,13 +97,14 @@ public class ApplicationsFragment extends Fragment {
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
                         progressBar.setVisibility(View.GONE);
+                        applicationList.clear();
                         if (apps != null && apps.length > 0) {
-                            applicationList.clear();
                             for (ShopApplication app : apps) {
                                 applicationList.add(app);
                             }
                             adapter.notifyDataSetChanged();
                         } else {
+                            emptyView.setText("No applications yet");
                             emptyView.setVisibility(View.VISIBLE);
                         }
                     });
@@ -151,12 +163,15 @@ public class ApplicationsFragment extends Fragment {
             if (apps != null && apps.length > 0) {
                 ShopApplication app = apps[0];
 
-                String shopJson = "{\"application_id\":\"" + escapeJson(app.getId()) +
-                        "\",\"owner_id\":\"" + escapeJson(app.getOwnerId()) +
-                        "\",\"name\":\"" + escapeJson(app.getShopName()) +
-                        "\",\"description\":\"" + escapeJson(app.getShopDescription()) +
-                        "\",\"location\":\"" + escapeJson(app.getLocation()) +
-                        "\",\"phone\":\"" + escapeJson(app.getPhone()) + "\"}";
+                String shopJson = "{" +
+                        "\"application_id\":\"" + escapeJson(app.getId()) + "\"," +
+                        "\"owner_id\":\"" + escapeJson(app.getOwnerId()) + "\"," +
+                        "\"name\":\"" + escapeJson(app.getShopName()) + "\"," +
+                        "\"description\":\"" + escapeJson(app.getShopDescription()) + "\"," +
+                        "\"location\":\"" + escapeJson(app.getLocation()) + "\"," +
+                        "\"phone\":\"" + escapeJson(app.getPhone()) + "\"," +
+                        "\"is_active\":true" +
+                        "}";
 
                 SupabaseApi.getInstance().post("shops", shopJson, token);
             }
@@ -195,12 +210,26 @@ public class ApplicationsFragment extends Fragment {
         public void onBindViewHolder(@NonNull ApplicationViewHolder holder, int position) {
             ShopApplication app = applications.get(position);
             holder.orderId.setText(app.getShopName());
-            holder.orderStatus.setText(app.getStatus().toUpperCase());
-            holder.orderAmount.setText(app.getLocation());
-            holder.orderDate.setText(app.getCreatedAt());
 
-            holder.nextStatusButton.setVisibility(View.VISIBLE);
+            String statusText = app.getStatus().toUpperCase();
+            holder.orderStatus.setText(statusText);
+
+            // Color the status badge
+            int statusColor;
+            if ("approved".equals(app.getStatus())) {
+                statusColor = 0xFF4CAF50; // green
+            } else if ("rejected".equals(app.getStatus())) {
+                statusColor = 0xFFE53935; // red
+            } else {
+                statusColor = 0xFFFF9800; // orange/pending
+            }
+            holder.orderStatus.getBackground().setTint(statusColor);
+
+            holder.orderAmount.setText("Location: " + (app.getLocation() != null ? app.getLocation() : "N/A"));
+            holder.orderDate.setText("Shop: " + (app.getShopDescription() != null ? app.getShopDescription() : ""));
+
             if ("pending".equals(app.getStatus())) {
+                holder.nextStatusButton.setVisibility(View.VISIBLE);
                 holder.nextStatusButton.setText("Approve");
                 holder.nextStatusButton.setOnClickListener(v -> listener.onApprove(app));
                 holder.rejectButton.setVisibility(View.VISIBLE);

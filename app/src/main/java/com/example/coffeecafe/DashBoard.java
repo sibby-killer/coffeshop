@@ -2,21 +2,21 @@ package com.example.coffeecafe;
 
 import android.os.Bundle;
 import android.view.Menu;
-import android.view.MenuItem;
+import android.view.View;
+import android.view.WindowManager;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.coffeecafe.admin.AdminDashboardFragment;
-import com.example.coffeecafe.admin.ApplicationsFragment;
-import com.example.coffeecafe.admin.CreateAdminFragment;
 import com.example.coffeecafe.admin.ManageShopsFragment;
+import com.example.coffeecafe.admin.ManageUsersFragment;
 import com.example.coffeecafe.auth.AuthManager;
 import com.example.coffeecafe.customer.CartFragment;
 import com.example.coffeecafe.customer.CustomerHomeFragment;
 import com.example.coffeecafe.customer.CustomerOrdersFragment;
 import com.example.coffeecafe.profile.ProfileFragment;
-import com.example.coffeecafe.shopowner.ApplicationStatusFragment;
 import com.example.coffeecafe.shopowner.MyShopFragment;
 import com.example.coffeecafe.shopowner.ProductsFragment;
 import com.example.coffeecafe.shopowner.ShopDashboardFragment;
@@ -30,6 +30,7 @@ public class DashBoard extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
         setContentView(R.layout.activity_dash_board);
 
         userRole = getIntent().getStringExtra("role");
@@ -69,12 +70,10 @@ public class DashBoard extends AppCompatActivity {
             if (userRole.equals("admin")) {
                 if (itemId == R.id.nav_dashboard) {
                     fragment = new AdminDashboardFragment();
-                } else if (itemId == R.id.nav_applications) {
-                    fragment = new ApplicationsFragment();
                 } else if (itemId == R.id.nav_shops) {
                     fragment = new ManageShopsFragment();
-                } else if (itemId == R.id.nav_create_admin) {
-                    fragment = new CreateAdminFragment();
+                } else if (itemId == R.id.nav_users) {
+                    fragment = new ManageUsersFragment();
                 } else if (itemId == R.id.nav_profile) {
                     fragment = new ProfileFragment();
                 }
@@ -87,8 +86,6 @@ public class DashBoard extends AppCompatActivity {
                     fragment = new ShopOrdersFragment();
                 } else if (itemId == R.id.nav_myshop) {
                     fragment = new MyShopFragment();
-                } else if (itemId == R.id.nav_application) {
-                    fragment = new ApplicationStatusFragment();
                 } else if (itemId == R.id.nav_profile) {
                     fragment = new ProfileFragment();
                 }
@@ -124,26 +121,50 @@ public class DashBoard extends AppCompatActivity {
     }
 
     private void setupAdminNavigation(Menu menu) {
-        menu.add(0, R.id.nav_dashboard, 0, "Dashboard").setCheckable(true);
-        menu.add(0, R.id.nav_applications, 1, "Applications").setCheckable(true);
-        menu.add(0, R.id.nav_shops, 2, "Shops").setCheckable(true);
-        menu.add(0, R.id.nav_create_admin, 3, "Create Admin").setCheckable(true);
-        menu.add(0, R.id.nav_profile, 4, "Profile").setCheckable(true);
+        menu.add(0, R.id.nav_dashboard, 0, "Dashboard")
+                .setIcon(ContextCompat.getDrawable(this, R.drawable.ic_dashboard))
+                .setCheckable(true);
+        menu.add(0, R.id.nav_shops, 1, "Shops")
+                .setIcon(ContextCompat.getDrawable(this, R.drawable.ic_shop))
+                .setCheckable(true);
+        menu.add(0, R.id.nav_users, 2, "Users")
+                .setIcon(ContextCompat.getDrawable(this, R.drawable.ic_admin_create))
+                .setCheckable(true);
+        menu.add(0, R.id.nav_profile, 3, "Profile")
+                .setIcon(ContextCompat.getDrawable(this, R.drawable.ic_profile))
+                .setCheckable(true);
     }
 
     private void setupShopOwnerNavigation(Menu menu) {
-        menu.add(0, R.id.nav_dashboard, 0, "Dashboard").setCheckable(true);
-        menu.add(0, R.id.nav_products, 1, "Products").setCheckable(true);
-        menu.add(0, R.id.nav_orders, 2, "Orders").setCheckable(true);
-        menu.add(0, R.id.nav_myshop, 3, "My Shop").setCheckable(true);
-        menu.add(0, R.id.nav_application, 4, "Application").setCheckable(true);
-        menu.add(0, R.id.nav_profile, 5, "Profile").setCheckable(true);
+        menu.add(0, R.id.nav_dashboard, 0, "Dashboard")
+                .setIcon(ContextCompat.getDrawable(this, R.drawable.ic_dashboard))
+                .setCheckable(true);
+        menu.add(0, R.id.nav_products, 1, "Products")
+                .setIcon(ContextCompat.getDrawable(this, R.drawable.ic_products))
+                .setCheckable(true);
+        menu.add(0, R.id.nav_orders, 2, "Orders")
+                .setIcon(ContextCompat.getDrawable(this, R.drawable.ic_orders))
+                .setCheckable(true);
+        menu.add(0, R.id.nav_myshop, 3, "My Shop")
+                .setIcon(ContextCompat.getDrawable(this, R.drawable.ic_my_shop))
+                .setCheckable(true);
+        menu.add(0, R.id.nav_profile, 4, "Profile")
+                .setIcon(ContextCompat.getDrawable(this, R.drawable.ic_profile))
+                .setCheckable(true);
     }
 
     private void setupCustomerNavigation(Menu menu) {
-        menu.add(0, R.id.nav_home, 0, "Home").setCheckable(true);
-        menu.add(0, R.id.nav_cart, 1, "Cart").setCheckable(true);
-        menu.add(0, R.id.nav_orders, 2, "Orders").setCheckable(true);
-        menu.add(0, R.id.nav_profile, 3, "Profile").setCheckable(true);
+        menu.add(0, R.id.nav_home, 0, "Home")
+                .setIcon(ContextCompat.getDrawable(this, R.drawable.ic_dashboard))
+                .setCheckable(true);
+        menu.add(0, R.id.nav_cart, 1, "Cart")
+                .setIcon(ContextCompat.getDrawable(this, R.drawable.ic_cart))
+                .setCheckable(true);
+        menu.add(0, R.id.nav_orders, 2, "Orders")
+                .setIcon(ContextCompat.getDrawable(this, R.drawable.ic_orders))
+                .setCheckable(true);
+        menu.add(0, R.id.nav_profile, 3, "Profile")
+                .setIcon(ContextCompat.getDrawable(this, R.drawable.ic_profile))
+                .setCheckable(true);
     }
 }

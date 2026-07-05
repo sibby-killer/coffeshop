@@ -149,7 +149,7 @@ public class ShopDetailFragment extends Fragment {
         public void onBindViewHolder(@NonNull ProductViewHolder holder, int position) {
             Product product = products.get(position);
             holder.productName.setText(product.getName());
-            holder.productPrice.setText(String.format("$%.2f", product.getPrice()));
+            holder.productPrice.setText(String.format("KES %.0f", product.getPrice()));
             holder.productDescription.setText(product.getDescription());
             holder.addToCartButton.setOnClickListener(v -> listener.onAddToCart(product));
         }

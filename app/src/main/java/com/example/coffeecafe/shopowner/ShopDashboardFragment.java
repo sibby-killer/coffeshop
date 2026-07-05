@@ -93,7 +93,7 @@ public class ShopDashboardFragment extends Fragment {
                         totalOrdersView.setText(String.valueOf(finalTotal));
                         pendingOrdersView.setText(String.valueOf(finalPending));
                         completedOrdersView.setText(String.valueOf(finalCompleted));
-                        totalRevenueView.setText(String.format("$%.2f", finalRevenue));
+                        totalRevenueView.setText(String.format("KES %.0f", finalRevenue));
                     });
                 }
             } catch (Exception e) {

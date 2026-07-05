@@ -81,7 +81,7 @@ public class CartFragment extends Fragment {
             checkoutButton.setEnabled(true);
         }
         double total = CartManager.getInstance(getContext()).getCartTotal();
-        totalView.setText(String.format("Total: $%.2f", total));
+        totalView.setText(String.format("Total: KES %.0f", total));
     }
 
     private class CartAdapter extends RecyclerView.Adapter<CartAdapter.CartViewHolder> {
@@ -114,9 +114,9 @@ public class CartFragment extends Fragment {
         public void onBindViewHolder(@NonNull CartViewHolder holder, int position) {
             CartManager.CartItem item = items.get(position);
             holder.itemName.setText(item.getProductName());
-            holder.itemPrice.setText(String.format("$%.2f", item.getPrice()));
+            holder.itemPrice.setText(String.format("KES %.0f", item.getPrice()));
             holder.itemQuantity.setText(String.valueOf(item.getQuantity()));
-            holder.itemSubtotal.setText(String.format("$%.2f", item.getSubtotal()));
+            holder.itemSubtotal.setText(String.format("KES %.0f", item.getSubtotal()));
 
             holder.minusButton.setOnClickListener(v -> {
                 CartManager.getInstance(getContext()).updateQuantity(item.getProductId(), item.getQuantity() - 1);
