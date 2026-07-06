@@ -129,7 +129,13 @@ public class DashBoard extends AppCompatActivity {
             bottomNavigationView.setSelectedItemId(R.id.nav_dashboard);
             setupOrderBadge(R.id.nav_orders);
         } else {
-            bottomNavigationView.setSelectedItemId(R.id.nav_home);
+            // Check if opened from deep link (coffeecafe://orders)
+            if (getIntent() != null && getIntent().getData() != null
+                    && "orders".equals(getIntent().getData().getHost())) {
+                bottomNavigationView.setSelectedItemId(R.id.nav_orders);
+            } else {
+                bottomNavigationView.setSelectedItemId(R.id.nav_home);
+            }
             setupCartBadge();
         }
     }

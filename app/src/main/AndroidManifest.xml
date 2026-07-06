@@ -32,35 +32,20 @@
             android:exported="false" />
         <activity
             android:name=".DashBoard"
-            android:exported="false"
-            android:hardwareAccelerated="true" />
+            android:exported="true"
+            android:hardwareAccelerated="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="coffeecafe"
+                    android:host="orders" />
+            </intent-filter>
+        </activity>
         <activity
             android:name=".customer.CheckoutActivity"
             android:exported="false" />
-        <activity
-            android:name=".auth.EmailVerifiedActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data
-                    android:scheme="coffeecafe"
-                    android:host="email-verified" />
-            </intent-filter>
-        </activity>
-        <activity
-            android:name=".customer.PaymentCallbackActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data
-                    android:scheme="coffeecafe"
-                    android:host="paystack-callback" />
-            </intent-filter>
-        </activity>
         <activity
             android:name=".customer.OrderTrackingActivity"
             android:exported="false" />

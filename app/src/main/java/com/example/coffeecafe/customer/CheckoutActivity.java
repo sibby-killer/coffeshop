@@ -278,7 +278,7 @@ public class CheckoutActivity extends AppCompatActivity {
                 paystackBody.put("email", email);
                 paystackBody.put("order_id", orderId);
                 paystackBody.put("payment_method", paymentMethod);
-                paystackBody.put("callback_url", "coffeecafe://paystack-callback?order_id=" + orderId);
+                paystackBody.put("callback_url", "https://sibby-killer.github.io/coffeshop/payment-callback.html");
 
                 if (!radioCard.isChecked()) {
                     paystackBody.put("phone", phone);
@@ -312,12 +312,21 @@ public class CheckoutActivity extends AppCompatActivity {
                 // Parse response for redirect URL or authorization URL
                 JsonObject responseJson = JsonParser.parseString(responseBody).getAsJsonObject();
 
-                // Build callback URL for returning to app after payment
-                final String callbackUrl = "coffeecafe://paystack-callback?order_id=" + orderId;
+                // Store payment reference on the order
                 if (responseJson.has("reference")) {
-                    final String ref = responseJson.get("reference").getAsString();
-                    // Store reference for tracking
+                    String ref = responseJson.get("reference").getAsString();
+                    Map<String, Object> refUpdate = new HashMap<>();
+                    refUpdate.put("payment_reference", ref);
+                    try {
+                        SupabaseApi.getInstance().patch("orders", "id=eq." + orderId,
+                                new Gson().toJson(refUpdate), authToken[0]);
+                    } catch (Exception e) {
+                        // Non-critical, continue
+                    }
                 }
+
+                // Build callback URL for returning to app after payment
+                final String callbackUrl = "https://sibby-killer.github.io/coffeshop/payment-callback.html";
 
                 runOnUiThread(() -> {
                     progressBar.setVisibility(View.GONE);

@@ -2,6 +2,8 @@ package com.example.coffeecafe.customer;
 
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -11,9 +13,12 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.coffeecafe.R;
+import com.example.coffeecafe.auth.AuthManager;
 import com.example.coffeecafe.config.SupabaseApi;
 import com.example.coffeecafe.models.Order;
 import com.example.coffeecafe.models.OrderItem;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.card.MaterialCardView;
 import com.google.gson.Gson;
 
 import java.util.HashMap;
@@ -23,6 +28,10 @@ public class OrderTrackingActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private TextView errorText, orderIdText, shopNameText, orderAmountText, orderDateText, orderItemsText;
     private View orderCard, timelineCard;
+    private MaterialCardView verifyCard;
+    private MaterialButton verifyPaymentBtn;
+    private ProgressBar verifyProgress;
+    private TextView verifyStatus;
 
     // Step views
     private View dotPending, dotPaid, dotPreparing, dotReady, dotCompleted;
@@ -35,6 +44,12 @@ public class OrderTrackingActivity extends AppCompatActivity {
     private static final int COLOR_INACTIVE = 0xFFBBBBBB;
     private static final int COLOR_LINE_ACTIVE = 0xFF4CAF50;
     private static final int COLOR_LINE_INACTIVE = 0xFFCCCCCC;
+
+    private String currentOrderId;
+    private String currentReference;
+    private Handler pollingHandler;
+    private Runnable pollingRunnable;
+    private boolean isPolling = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,11 +91,19 @@ public class OrderTrackingActivity extends AppCompatActivity {
         timeReady = findViewById(R.id.time_ready);
         timeCompleted = findViewById(R.id.time_completed);
 
-        String orderId = getIntent().getStringExtra("order_id");
-        String reference = getIntent().getStringExtra("reference");
+        verifyCard = findViewById(R.id.verify_card);
+        verifyPaymentBtn = findViewById(R.id.verify_payment_btn);
+        verifyProgress = findViewById(R.id.verify_progress);
+        verifyStatus = findViewById(R.id.verify_status);
 
-        if (orderId != null) {
-            verifyAndLoadOrder(orderId, reference);
+        currentOrderId = getIntent().getStringExtra("order_id");
+        currentReference = getIntent().getStringExtra("reference");
+
+        // Verify payment button click
+        verifyPaymentBtn.setOnClickListener(v -> verifyPayment());
+
+        if (currentOrderId != null) {
+            verifyAndLoadOrder(currentOrderId, currentReference);
         } else {
             showError("No order ID provided");
         }
@@ -101,59 +124,72 @@ public class OrderTrackingActivity extends AppCompatActivity {
                     }
                 }
 
-                // Load order details
-                String orderQuery = "id=eq." + orderId + "&select=*,shops(name)";
-                String orderResponse = SupabaseApi.getInstance().get("orders", orderQuery);
-                Order[] orders = new Gson().fromJson(orderResponse, Order[].class);
+                loadOrderDetails(orderId);
 
-                if (orders == null || orders.length == 0) {
-                    runOnUiThread(() -> showError("Order not found"));
-                    return;
-                }
-
-                Order order = orders[0];
-
-                // Load order items
-                String itemsQuery = "order_id=eq." + orderId;
-                String itemsResponse = SupabaseApi.getInstance().get("order_items", itemsQuery);
-                OrderItem[] items = new Gson().fromJson(itemsResponse, OrderItem[].class);
-
-                runOnUiThread(() -> {
-                    progressBar.setVisibility(View.GONE);
-                    orderCard.setVisibility(View.VISIBLE);
-                    timelineCard.setVisibility(View.VISIBLE);
-
-                    String displayId = orderId.length() >= 8 ? orderId.substring(0, 8) : orderId;
-                    orderIdText.setText("Order #" + displayId);
-
-                    if (order.getShopName() != null && !order.getShopName().isEmpty()) {
-                        shopNameText.setText("From: " + order.getShopName());
-                        shopNameText.setVisibility(View.VISIBLE);
-                    } else {
-                        shopNameText.setVisibility(View.GONE);
-                    }
-
-                    orderAmountText.setText(String.format("KES %.0f", order.getTotalAmount()));
-                    orderDateText.setText(order.getCreatedAt());
-
-                    // Build items summary
-                    StringBuilder sb = new StringBuilder();
-                    if (items != null) {
-                        for (OrderItem item : items) {
-                            sb.append(item.getProductName())
-                              .append(" x").append(item.getQuantity())
-                              .append(" - KES ").append(String.format("%.0f", item.getSubtotal()))
-                              .append("\n");
-                        }
-                    }
-                    orderItemsText.setText(sb.toString().trim());
-
-                    updateTimeline(order.getStatus(), order.getCreatedAt());
-                });
+                // Start polling if order is still pending
+                startPolling(orderId);
             } catch (Exception e) {
                 runOnUiThread(() -> showError("Failed to load order: " + e.getMessage()));
             }
         }).start();
+    }
+
+    private void loadOrderDetails(String orderId) throws Exception {
+        String token = AuthManager.getInstance(this).getAccessToken();
+        String orderQuery = "id=eq." + orderId + "&select=*,shops(name)";
+        String orderResponse = SupabaseApi.getInstance().get("orders", orderQuery, token);
+        Order[] orders = new Gson().fromJson(orderResponse, Order[].class);
+
+        if (orders == null || orders.length == 0) {
+            runOnUiThread(() -> showError("Order not found"));
+            return;
+        }
+
+        Order order = orders[0];
+
+        // Load order items
+        String itemsQuery = "order_id=eq." + orderId;
+        String itemsResponse = SupabaseApi.getInstance().get("order_items", itemsQuery, token);
+        OrderItem[] items = new Gson().fromJson(itemsResponse, OrderItem[].class);
+
+        runOnUiThread(() -> {
+            progressBar.setVisibility(View.GONE);
+            orderCard.setVisibility(View.VISIBLE);
+            timelineCard.setVisibility(View.VISIBLE);
+
+            String displayId = orderId.length() >= 8 ? orderId.substring(0, 8) : orderId;
+            orderIdText.setText("Order #" + displayId);
+
+            if (order.getShopName() != null && !order.getShopName().isEmpty()) {
+                shopNameText.setText("From: " + order.getShopName());
+                shopNameText.setVisibility(View.VISIBLE);
+            } else {
+                shopNameText.setVisibility(View.GONE);
+            }
+
+            orderAmountText.setText(String.format("KES %.0f", order.getTotalAmount()));
+            orderDateText.setText(order.getCreatedAt());
+
+            StringBuilder sb = new StringBuilder();
+            if (items != null) {
+                for (OrderItem item : items) {
+                    sb.append(item.getProductName())
+                      .append(" x").append(item.getQuantity())
+                      .append(" - KES ").append(String.format("%.0f", item.getSubtotal()))
+                      .append("\n");
+                }
+            }
+            orderItemsText.setText(sb.toString().trim());
+
+            updateTimeline(order.getStatus(), order.getCreatedAt());
+
+            // Show verify button only if order is still pending
+            if ("pending".equals(order.getStatus())) {
+                verifyCard.setVisibility(View.VISIBLE);
+            } else {
+                verifyCard.setVisibility(View.GONE);
+            }
+        });
     }
 
     private void updateTimeline(String status, String createdAt) {
@@ -227,6 +263,94 @@ public class OrderTrackingActivity extends AppCompatActivity {
 
     private void setLineActive(View line, boolean active) {
         line.setBackgroundColor(active ? COLOR_LINE_ACTIVE : COLOR_LINE_INACTIVE);
+    }
+
+    private void verifyPayment() {
+        if (currentOrderId == null) return;
+
+        verifyPaymentBtn.setEnabled(false);
+        verifyProgress.setVisibility(View.VISIBLE);
+        verifyStatus.setVisibility(View.VISIBLE);
+        verifyStatus.setText("Verifying payment...");
+
+        new Thread(() -> {
+            try {
+                // First try to get the reference from the order itself
+                String token = AuthManager.getInstance(OrderTrackingActivity.this).getAccessToken();
+                String orderQuery = "id=eq." + currentOrderId + "&select=payment_reference";
+                String orderResponse = SupabaseApi.getInstance().get("orders", orderQuery, token);
+                Order[] orders = new Gson().fromJson(orderResponse, Order[].class);
+
+                String reference = null;
+                if (orders != null && orders.length > 0 && orders[0].getPaymentReference() != null) {
+                    reference = orders[0].getPaymentReference();
+                } else if (currentReference != null) {
+                    reference = currentReference;
+                }
+
+                if (reference != null && !reference.isEmpty()) {
+                    // Call verify-transaction edge function
+                    String verifyUrl = "verify-transaction?reference=" + reference;
+                    try {
+                        SupabaseApi.getInstance().postEdgeFunction(verifyUrl, "{}", null);
+                    } catch (Exception e) {
+                        // Continue anyway - order might already be updated
+                    }
+                }
+
+                // Reload order to get updated status
+                loadOrderDetails(currentOrderId);
+
+                runOnUiThread(() -> {
+                    verifyProgress.setVisibility(View.GONE);
+                    verifyPaymentBtn.setEnabled(true);
+                    verifyStatus.setText("Payment verified! Status updated.");
+                });
+            } catch (Exception e) {
+                runOnUiThread(() -> {
+                    verifyProgress.setVisibility(View.GONE);
+                    verifyPaymentBtn.setEnabled(true);
+                    verifyStatus.setText("Could not verify. Tap again or check your order.");
+                });
+            }
+        }).start();
+    }
+
+    private void startPolling(String orderId) {
+        pollingHandler = new Handler(Looper.getMainLooper());
+        pollingRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (isFinishing() || isPolling) return;
+                isPolling = true;
+
+                new Thread(() -> {
+                    try {
+                        loadOrderDetails(orderId);
+                    } catch (Exception e) {
+                        // Silently ignore polling errors
+                    } finally {
+                        isPolling = false;
+                        if (!isFinishing()) {
+                            pollingHandler.postDelayed(this, 5000);
+                        }
+                    }
+                }).start();
+            }
+        };
+        pollingHandler.postDelayed(pollingRunnable, 5000);
+    }
+
+    private void stopPolling() {
+        if (pollingHandler != null && pollingRunnable != null) {
+            pollingHandler.removeCallbacks(pollingRunnable);
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        stopPolling();
     }
 
     private void showError(String message) {
