@@ -1,14 +1,8 @@
 package com.example.coffeecafe;
 
-import android.graphics.Typeface;
 import android.os.Bundle;
-import android.view.Gravity;
 import android.view.Menu;
-import android.view.View;
-import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.FrameLayout;
-import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
@@ -17,8 +11,6 @@ import androidx.fragment.app.Fragment;
 import com.example.coffeecafe.admin.AdminDashboardFragment;
 import com.example.coffeecafe.admin.AdminSalesFragment;
 import com.example.coffeecafe.admin.AdminWithdrawalsFragment;
-import com.example.coffeecafe.admin.ManageShopsFragment;
-import com.example.coffeecafe.admin.ManageUsersFragment;
 import com.example.coffeecafe.auth.AuthManager;
 import com.example.coffeecafe.customer.CartFragment;
 import com.example.coffeecafe.customer.CustomerHomeFragment;
@@ -33,14 +25,13 @@ import com.example.coffeecafe.shopowner.WithdrawFragment;
 import com.example.coffeecafe.config.SupabaseApi;
 import com.example.coffeecafe.utils.CartManager;
 import com.example.coffeecafe.utils.SessionManager;
+import com.google.android.material.badge.BadgeDrawable;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.gson.Gson;
 
 public class DashBoard extends AppCompatActivity {
     private BottomNavigationView bottomNavigationView;
     private String userRole;
-    private TextView cartBadgeTextView;
-    private TextView orderBadgeTextView;
     private CartManager.CartUpdateListener cartListener;
 
     @Override
@@ -196,85 +187,33 @@ public class DashBoard extends AppCompatActivity {
 
     private void setupCartBadge() {
         CartManager cartManager = CartManager.getInstance(this);
-
-        bottomNavigationView.post(() -> {
-            View cartItem = bottomNavigationView.findViewById(R.id.nav_cart);
-            if (cartItem == null) return;
-
-            cartBadgeTextView = new TextView(this);
-            cartBadgeTextView.setBackgroundResource(R.drawable.bg_cart_badge);
-            cartBadgeTextView.setTextColor(0xFFFFFFFF);
-            cartBadgeTextView.setTextSize(10);
-            cartBadgeTextView.setTypeface(null, Typeface.BOLD);
-            cartBadgeTextView.setGravity(Gravity.CENTER);
-            cartBadgeTextView.setVisibility(View.GONE);
-
-            int badgeSize = (int) (18 * getResources().getDisplayMetrics().density + 0.5f);
-            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(badgeSize, badgeSize);
-            params.gravity = Gravity.TOP | Gravity.END;
-            params.topMargin = 4;
-            params.rightMargin = 4;
-
-            if (cartItem.getParent() instanceof ViewGroup) {
-                ViewGroup parent = (ViewGroup) cartItem.getParent();
-                parent.addView(cartBadgeTextView, params);
-            }
-
-            cartListener = (items, total) -> updateCartBadgeCount();
-            cartManager.setCartUpdateListener(cartListener);
-            updateCartBadgeCount();
-        });
+        cartListener = (items, total) -> updateCartBadge();
+        cartManager.setCartUpdateListener(cartListener);
+        updateCartBadge();
     }
 
-    private void updateCartBadgeCount() {
-        if (cartBadgeTextView == null) return;
+    private void updateCartBadge() {
         int count = CartManager.getInstance(this).getCartCount();
         if (count > 0) {
-            cartBadgeTextView.setText(count > 99 ? "99+" : String.valueOf(count));
-            cartBadgeTextView.setVisibility(View.VISIBLE);
+            BadgeDrawable badge = bottomNavigationView.getOrCreateBadge(R.id.nav_cart);
+            badge.setNumber(count > 99 ? 99 : count);
+            badge.setVisible(true);
         } else {
-            cartBadgeTextView.setVisibility(View.GONE);
+            bottomNavigationView.removeBadge(R.id.nav_cart);
         }
     }
 
     private void setupOrderBadge(int menuItemId) {
-        bottomNavigationView.post(() -> {
-            View menuItem = bottomNavigationView.findViewById(menuItemId);
-            if (menuItem == null) return;
-
-            orderBadgeTextView = new TextView(this);
-            orderBadgeTextView.setBackgroundResource(R.drawable.bg_cart_badge);
-            orderBadgeTextView.setTextColor(0xFFFFFFFF);
-            orderBadgeTextView.setTextSize(10);
-            orderBadgeTextView.setTypeface(null, Typeface.BOLD);
-            orderBadgeTextView.setGravity(Gravity.CENTER);
-            orderBadgeTextView.setVisibility(View.GONE);
-
-            int badgeSize = (int) (18 * getResources().getDisplayMetrics().density + 0.5f);
-            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(badgeSize, badgeSize);
-            params.gravity = Gravity.TOP | Gravity.END;
-            params.topMargin = 4;
-            params.rightMargin = 4;
-
-            if (menuItem.getParent() instanceof ViewGroup) {
-                ViewGroup parent = (ViewGroup) menuItem.getParent();
-                parent.addView(orderBadgeTextView, params);
-            }
-
-            loadOrderCount();
-        });
+        loadOrderCount(menuItemId);
     }
 
-    private void loadOrderCount() {
-        if (orderBadgeTextView == null) return;
-
+    private void loadOrderCount(int menuItemId) {
         new Thread(() -> {
             try {
                 String token = AuthManager.getInstance(this).getAccessToken();
                 int count = 0;
 
                 if (userRole.equals("shop_owner")) {
-                    // Count pending/paid orders for this shop owner's shop
                     String userId = SessionManager.getInstance(this).getUserId();
                     String shopQuery = "select=id&owner_id=eq." + userId + "&limit=1";
                     String shopResp = SupabaseApi.getInstance().get("shops", shopQuery, token);
@@ -287,7 +226,6 @@ public class DashBoard extends AppCompatActivity {
                         count = orders != null ? orders.length : 0;
                     }
                 } else if (userRole.equals("admin")) {
-                    // Count all pending/paid orders across all shops
                     String orderQuery = "select=id&status=in.(pending,paid)&order=created_at.desc";
                     String orderResp = SupabaseApi.getInstance().get("orders", orderQuery, token);
                     OrderId[] orders = new Gson().fromJson(orderResp, OrderId[].class);
@@ -295,13 +233,14 @@ public class DashBoard extends AppCompatActivity {
                 }
 
                 final int finalCount = count;
+                final int targetItemId = menuItemId;
                 runOnUiThread(() -> {
-                    if (orderBadgeTextView == null) return;
                     if (finalCount > 0) {
-                        orderBadgeTextView.setText(finalCount > 99 ? "99+" : String.valueOf(finalCount));
-                        orderBadgeTextView.setVisibility(View.VISIBLE);
+                        BadgeDrawable badge = bottomNavigationView.getOrCreateBadge(targetItemId);
+                        badge.setNumber(finalCount > 99 ? 99 : finalCount);
+                        badge.setVisible(true);
                     } else {
-                        orderBadgeTextView.setVisibility(View.GONE);
+                        bottomNavigationView.removeBadge(targetItemId);
                     }
                 });
             } catch (Exception e) {
@@ -321,8 +260,12 @@ public class DashBoard extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        updateCartBadgeCount();
-        loadOrderCount();
+        updateCartBadge();
+        if (userRole.equals("shop_owner")) {
+            loadOrderCount(R.id.nav_orders);
+        } else if (userRole.equals("admin")) {
+            loadOrderCount(R.id.nav_dashboard);
+        }
     }
 
     @Override
