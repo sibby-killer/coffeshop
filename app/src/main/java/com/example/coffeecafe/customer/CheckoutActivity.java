@@ -218,6 +218,7 @@ public class CheckoutActivity extends AppCompatActivity {
         new Thread(() -> {
             try {
                 String shopId = cartManager.getCartShopId();
+                final String[] authToken = {AuthManager.getInstance(this).getAccessToken()};
 
                 // Create order
                 Map<String, Object> orderData = new HashMap<>();
@@ -229,7 +230,17 @@ public class CheckoutActivity extends AppCompatActivity {
                 orderData.put("notes", notes);
 
                 String orderJson = new Gson().toJson(orderData);
-                String orderResponse = SupabaseApi.getInstance().post("orders", orderJson, token);
+                String orderResponse;
+                try {
+                    orderResponse = SupabaseApi.getInstance().post("orders", orderJson, authToken[0]);
+                } catch (SupabaseApi.TokenExpiredException e) {
+                    if (AuthManager.getInstance(CheckoutActivity.this).refreshAccessToken()) {
+                        authToken[0] = AuthManager.getInstance(CheckoutActivity.this).getAccessToken();
+                        orderResponse = SupabaseApi.getInstance().post("orders", orderJson, authToken[0]);
+                    } else {
+                        throw new Exception("Session expired. Please log in again.");
+                    }
+                }
 
                 Order[] createdOrders = new Gson().fromJson(orderResponse, Order[].class);
                 if (createdOrders == null || createdOrders.length == 0) {
@@ -249,7 +260,14 @@ public class CheckoutActivity extends AppCompatActivity {
                     itemData.put("price", item.getPrice());
 
                     String itemJson = new Gson().toJson(itemData);
-                    SupabaseApi.getInstance().post("order_items", itemJson, token);
+                    try {
+                        SupabaseApi.getInstance().post("order_items", itemJson, authToken[0]);
+                    } catch (SupabaseApi.TokenExpiredException e2) {
+                        if (AuthManager.getInstance(CheckoutActivity.this).refreshAccessToken()) {
+                            authToken[0] = AuthManager.getInstance(CheckoutActivity.this).getAccessToken();
+                            SupabaseApi.getInstance().post("order_items", itemJson, authToken[0]);
+                        }
+                    }
                 }
 
                 runOnUiThread(() -> statusText.setText("Initializing payment..."));
@@ -270,11 +288,25 @@ public class CheckoutActivity extends AppCompatActivity {
                     }
                 }
 
-                String responseBody = SupabaseApi.getInstance().postEdgeFunction(
-                        "initialize-transaction",
-                        new Gson().toJson(paystackBody),
-                        token
-                );
+                String responseBody;
+                try {
+                    responseBody = SupabaseApi.getInstance().postEdgeFunction(
+                            "initialize-transaction",
+                            new Gson().toJson(paystackBody),
+                            authToken[0]
+                    );
+                } catch (SupabaseApi.TokenExpiredException e) {
+                    if (AuthManager.getInstance(CheckoutActivity.this).refreshAccessToken()) {
+                        authToken[0] = AuthManager.getInstance(CheckoutActivity.this).getAccessToken();
+                        responseBody = SupabaseApi.getInstance().postEdgeFunction(
+                                "initialize-transaction",
+                                new Gson().toJson(paystackBody),
+                                authToken[0]
+                        );
+                    } else {
+                        throw new Exception("Session expired. Please log in again.");
+                    }
+                }
 
                 // Parse response for redirect URL or authorization URL
                 JsonObject responseJson = JsonParser.parseString(responseBody).getAsJsonObject();

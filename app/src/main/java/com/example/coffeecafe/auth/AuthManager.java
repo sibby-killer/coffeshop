@@ -25,6 +25,7 @@ public class AuthManager {
     private static final String KEY_EMAIL = "user_email";
     private static final String KEY_PROFILE = "user_profile";
     private static final String KEY_ACCESS_TOKEN = "access_token";
+    private static final String KEY_REFRESH_TOKEN = "refresh_token";
 
     private final Context appContext;
 
@@ -79,6 +80,9 @@ public class AuthManager {
                     // Store access token if present
                     if (jsonResponse.has("access_token")) {
                         saveAccessToken(jsonResponse.get("access_token").getAsString());
+                    }
+                    if (jsonResponse.has("refresh_token")) {
+                        saveRefreshToken(jsonResponse.get("refresh_token").getAsString());
                     }
 
                     Profile profile = new Profile(userId, fullName, phone, role);
@@ -137,9 +141,12 @@ public class AuthManager {
                     String userId = user.has("id") ? user.get("id").getAsString() : "";
                     String userEmail = user.has("email") ? user.get("email").getAsString() : email;
 
-                    // Store access token
+                    // Store access and refresh tokens
                     if (jsonResponse.has("access_token")) {
                         saveAccessToken(jsonResponse.get("access_token").getAsString());
+                    }
+                    if (jsonResponse.has("refresh_token")) {
+                        saveRefreshToken(jsonResponse.get("refresh_token").getAsString());
                     }
 
                     Profile profile = fetchProfile(userId);
@@ -256,8 +263,47 @@ public class AuthManager {
         prefs.edit().putString(KEY_ACCESS_TOKEN, token).apply();
     }
 
+    private void saveRefreshToken(String token) {
+        prefs.edit().putString(KEY_REFRESH_TOKEN, token).apply();
+    }
+
     public String getAccessToken() {
         return prefs.getString(KEY_ACCESS_TOKEN, null);
+    }
+
+    public String getRefreshToken() {
+        return prefs.getString(KEY_REFRESH_TOKEN, null);
+    }
+
+    /**
+     * Refresh the access token using the stored refresh token.
+     * Returns true if refresh succeeded, false otherwise.
+     * On success, saves the new access_token and refresh_token.
+     */
+    public boolean refreshAccessToken() {
+        String refreshToken = getRefreshToken();
+        if (refreshToken == null || refreshToken.isEmpty()) {
+            return false;
+        }
+        try {
+            Map<String, Object> body = new HashMap<>();
+            body.put("refresh_token", refreshToken);
+            String jsonBody = gson.toJson(body);
+
+            String response = SupabaseApi.getInstance().postAuth("token?grant_type=refresh_token", jsonBody);
+            JsonObject jsonResponse = JsonParser.parseString(response).getAsJsonObject();
+
+            if (jsonResponse.has("access_token")) {
+                saveAccessToken(jsonResponse.get("access_token").getAsString());
+                if (jsonResponse.has("refresh_token")) {
+                    saveRefreshToken(jsonResponse.get("refresh_token").getAsString());
+                }
+                return true;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     private void clearSession() {
