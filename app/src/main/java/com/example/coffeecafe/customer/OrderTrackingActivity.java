@@ -1,0 +1,237 @@
+package com.example.coffeecafe.customer;
+
+import android.graphics.Typeface;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.coffeecafe.R;
+import com.example.coffeecafe.config.SupabaseApi;
+import com.example.coffeecafe.models.Order;
+import com.example.coffeecafe.models.OrderItem;
+import com.google.gson.Gson;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class OrderTrackingActivity extends AppCompatActivity {
+    private ProgressBar progressBar;
+    private TextView errorText, orderIdText, shopNameText, orderAmountText, orderDateText, orderItemsText;
+    private View orderCard, timelineCard;
+
+    // Step views
+    private View dotPending, dotPaid, dotPreparing, dotReady, dotCompleted;
+    private View linePending, linePaid, linePreparing, lineReady;
+    private TextView labelPending, labelPaid, labelPreparing, labelReady, labelCompleted;
+    private TextView timePending, timePaid, timePreparing, timeReady, timeCompleted;
+
+    private static final int COLOR_ACTIVE = 0xFFFF8F00;
+    private static final int COLOR_DONE = 0xFF4CAF50;
+    private static final int COLOR_INACTIVE = 0xFFBBBBBB;
+    private static final int COLOR_LINE_ACTIVE = 0xFF4CAF50;
+    private static final int COLOR_LINE_INACTIVE = 0xFFCCCCCC;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_order_tracking);
+
+        findViewById(R.id.back_btn).setOnClickListener(v -> finish());
+
+        progressBar = findViewById(R.id.progress_bar);
+        errorText = findViewById(R.id.error_text);
+        orderCard = findViewById(R.id.order_card);
+        timelineCard = findViewById(R.id.timeline_card);
+        orderIdText = findViewById(R.id.order_id_text);
+        shopNameText = findViewById(R.id.shop_name_text);
+        orderAmountText = findViewById(R.id.order_amount_text);
+        orderDateText = findViewById(R.id.order_date_text);
+        orderItemsText = findViewById(R.id.order_items_text);
+
+        dotPending = findViewById(R.id.dot_pending);
+        dotPaid = findViewById(R.id.dot_paid);
+        dotPreparing = findViewById(R.id.dot_preparing);
+        dotReady = findViewById(R.id.dot_ready);
+        dotCompleted = findViewById(R.id.dot_completed);
+
+        linePending = findViewById(R.id.line_pending);
+        linePaid = findViewById(R.id.line_paid);
+        linePreparing = findViewById(R.id.line_preparing);
+        lineReady = findViewById(R.id.line_ready);
+
+        labelPending = findViewById(R.id.label_pending);
+        labelPaid = findViewById(R.id.label_paid);
+        labelPreparing = findViewById(R.id.label_preparing);
+        labelReady = findViewById(R.id.label_ready);
+        labelCompleted = findViewById(R.id.label_completed);
+
+        timePending = findViewById(R.id.time_pending);
+        timePaid = findViewById(R.id.time_paid);
+        timePreparing = findViewById(R.id.time_preparing);
+        timeReady = findViewById(R.id.time_ready);
+        timeCompleted = findViewById(R.id.time_completed);
+
+        String orderId = getIntent().getStringExtra("order_id");
+        String reference = getIntent().getStringExtra("reference");
+
+        if (orderId != null) {
+            verifyAndLoadOrder(orderId, reference);
+        } else {
+            showError("No order ID provided");
+        }
+    }
+
+    private void verifyAndLoadOrder(String orderId, String reference) {
+        progressBar.setVisibility(View.VISIBLE);
+
+        new Thread(() -> {
+            try {
+                // If we have a reference, verify the payment first
+                if (reference != null && !reference.isEmpty()) {
+                    String verifyUrl = "verify-transaction?reference=" + reference;
+                    try {
+                        SupabaseApi.getInstance().postEdgeFunction(verifyUrl, "{}", null);
+                    } catch (Exception e) {
+                        // Verification might fail but order could still exist, continue
+                    }
+                }
+
+                // Load order details
+                String orderQuery = "id=eq." + orderId + "&select=*,shops(name)";
+                String orderResponse = SupabaseApi.getInstance().get("orders", orderQuery);
+                Order[] orders = new Gson().fromJson(orderResponse, Order[].class);
+
+                if (orders == null || orders.length == 0) {
+                    runOnUiThread(() -> showError("Order not found"));
+                    return;
+                }
+
+                Order order = orders[0];
+
+                // Load order items
+                String itemsQuery = "order_id=eq." + orderId;
+                String itemsResponse = SupabaseApi.getInstance().get("order_items", itemsQuery);
+                OrderItem[] items = new Gson().fromJson(itemsResponse, OrderItem[].class);
+
+                runOnUiThread(() -> {
+                    progressBar.setVisibility(View.GONE);
+                    orderCard.setVisibility(View.VISIBLE);
+                    timelineCard.setVisibility(View.VISIBLE);
+
+                    String displayId = orderId.length() >= 8 ? orderId.substring(0, 8) : orderId;
+                    orderIdText.setText("Order #" + displayId);
+
+                    if (order.getShopName() != null && !order.getShopName().isEmpty()) {
+                        shopNameText.setText("From: " + order.getShopName());
+                        shopNameText.setVisibility(View.VISIBLE);
+                    } else {
+                        shopNameText.setVisibility(View.GONE);
+                    }
+
+                    orderAmountText.setText(String.format("KES %.0f", order.getTotalAmount()));
+                    orderDateText.setText(order.getCreatedAt());
+
+                    // Build items summary
+                    StringBuilder sb = new StringBuilder();
+                    if (items != null) {
+                        for (OrderItem item : items) {
+                            sb.append(item.getProductName())
+                              .append(" x").append(item.getQuantity())
+                              .append(" - KES ").append(String.format("%.0f", item.getSubtotal()))
+                              .append("\n");
+                        }
+                    }
+                    orderItemsText.setText(sb.toString().trim());
+
+                    updateTimeline(order.getStatus(), order.getCreatedAt());
+                });
+            } catch (Exception e) {
+                runOnUiThread(() -> showError("Failed to load order: " + e.getMessage()));
+            }
+        }).start();
+    }
+
+    private void updateTimeline(String status, String createdAt) {
+        // Define which steps are completed based on status
+        boolean hasPending = true;
+        boolean hasPaid = false;
+        boolean hasPreparing = false;
+        boolean hasReady = false;
+        boolean hasCompleted = false;
+
+        switch (status) {
+            case "paid":
+                hasPaid = true;
+                break;
+            case "preparing":
+                hasPaid = true;
+                hasPreparing = true;
+                break;
+            case "ready":
+                hasPaid = true;
+                hasPreparing = true;
+                hasReady = true;
+                break;
+            case "completed":
+                hasPaid = true;
+                hasPreparing = true;
+                hasReady = true;
+                hasCompleted = true;
+                break;
+            default:
+                // pending - only first step active
+                break;
+        }
+
+        // Update pending
+        setStepActive(dotPending, labelPending, timePending, true, "Order Placed", createdAt);
+
+        // Update paid
+        setStepActive(dotPaid, labelPaid, timePaid, hasPaid,
+                hasPaid ? "Payment Confirmed" : "Awaiting Payment",
+                hasPaid ? createdAt : "");
+        setLineActive(linePending, hasPaid);
+
+        // Update preparing
+        setStepActive(dotPreparing, labelPreparing, timePreparing, hasPreparing,
+                hasPreparing ? "Preparing Your Order" : "Waiting...",
+                hasPreparing ? createdAt : "");
+        setLineActive(linePaid, hasPreparing);
+
+        // Update ready
+        setStepActive(dotReady, labelReady, timeReady, hasReady,
+                hasReady ? "Ready for Pickup" : "Waiting...",
+                hasReady ? createdAt : "");
+        setLineActive(linePreparing, hasReady);
+
+        // Update completed
+        setStepActive(dotCompleted, labelCompleted, timeCompleted, hasCompleted,
+                hasCompleted ? "Completed!" : "Waiting...",
+                hasCompleted ? createdAt : "");
+        setLineActive(lineReady, hasCompleted);
+    }
+
+    private void setStepActive(View dot, TextView label, TextView time, boolean active, String labelText, String timeText) {
+        dot.setBackgroundResource(active ? R.drawable.dot_active : R.drawable.dot_inactive);
+        label.setText(labelText);
+        label.setTextColor(active ? 0xFF333333 : COLOR_INACTIVE);
+        label.setTypeface(null, active ? Typeface.BOLD : Typeface.NORMAL);
+        time.setText(active && !timeText.isEmpty() ? timeText : "");
+        time.setTextColor(active ? 0xFF999999 : COLOR_INACTIVE);
+    }
+
+    private void setLineActive(View line, boolean active) {
+        line.setBackgroundColor(active ? COLOR_LINE_ACTIVE : COLOR_LINE_INACTIVE);
+    }
+
+    private void showError(String message) {
+        progressBar.setVisibility(View.GONE);
+        errorText.setText(message);
+        errorText.setVisibility(View.VISIBLE);
+    }
+}

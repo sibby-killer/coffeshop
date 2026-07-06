@@ -145,6 +145,7 @@ public class SupabaseApi {
 
     /**
      * POST request to insert a row.
+     * Returns the created row(s) by using Prefer: return=representation.
      */
     public String post(String table, String jsonBody, String token) throws IOException {
         String url = config.getSupabaseUrl() + "/rest/v1/" + table;
@@ -155,7 +156,8 @@ public class SupabaseApi {
                 .post(body)
                 .addHeader("apikey", config.getSupabaseKey())
                 .addHeader("Content-Type", "application/json")
-                .addHeader("Accept", "application/json");
+                .addHeader("Accept", "application/json")
+                .addHeader("Prefer", "return=representation");
 
         if (token != null && !token.isEmpty()) {
             builder.addHeader("Authorization", "Bearer " + token);

@@ -1,5 +1,6 @@
 package com.example.coffeecafe.customer;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -132,6 +133,13 @@ public class CustomerOrdersFragment extends Fragment {
                 default: statusColor = 0xFF9E9E9E; break;
             }
             holder.orderStatus.setTextColor(statusColor);
+
+            // Click to open order tracking
+            holder.itemView.setOnClickListener(v -> {
+                Intent intent = new Intent(getContext(), OrderTrackingActivity.class);
+                intent.putExtra("order_id", order.getId());
+                startActivity(intent);
+            });
         }
 
         @Override

@@ -278,6 +278,7 @@ public class CheckoutActivity extends AppCompatActivity {
                 paystackBody.put("email", email);
                 paystackBody.put("order_id", orderId);
                 paystackBody.put("payment_method", paymentMethod);
+                paystackBody.put("callback_url", "coffeecafe://paystack-callback?order_id=" + orderId);
 
                 if (!radioCard.isChecked()) {
                     paystackBody.put("phone", phone);
@@ -311,19 +312,40 @@ public class CheckoutActivity extends AppCompatActivity {
                 // Parse response for redirect URL or authorization URL
                 JsonObject responseJson = JsonParser.parseString(responseBody).getAsJsonObject();
 
+                // Build callback URL for returning to app after payment
+                final String callbackUrl = "coffeecafe://paystack-callback?order_id=" + orderId;
+                if (responseJson.has("reference")) {
+                    final String ref = responseJson.get("reference").getAsString();
+                    // Store reference for tracking
+                }
+
                 runOnUiThread(() -> {
                     progressBar.setVisibility(View.GONE);
                     cartManager.clearCart();
 
                     if (responseJson.has("authorization_url")) {
                         String authUrl = responseJson.get("authorization_url").getAsString();
+                        // Append callback to auth URL
+                        if (authUrl.contains("?")) {
+                            authUrl += "&callback_url=" + Uri.encode(callbackUrl);
+                        } else {
+                            authUrl += "?callback_url=" + Uri.encode(callbackUrl);
+                        }
                         Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(authUrl));
                         startActivity(browserIntent);
+
+                        // Navigate to order tracking instead of finishing
+                        Toast.makeText(this, "Order placed! After payment you'll be redirected back.", Toast.LENGTH_LONG).show();
+                        Intent trackIntent = new Intent(CheckoutActivity.this, OrderTrackingActivity.class);
+                        trackIntent.putExtra("order_id", orderId);
+                        startActivity(trackIntent);
                     } else {
                         statusText.setText("Payment initiated! Order: " + orderId.substring(0, 8));
+                        Intent trackIntent = new Intent(CheckoutActivity.this, OrderTrackingActivity.class);
+                        trackIntent.putExtra("order_id", orderId);
+                        startActivity(trackIntent);
                     }
 
-                    Toast.makeText(this, "Order placed successfully!", Toast.LENGTH_LONG).show();
                     finish();
                 });
             } catch (Exception e) {
