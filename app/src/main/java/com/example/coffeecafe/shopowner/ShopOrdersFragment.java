@@ -1,5 +1,6 @@
 package com.example.coffeecafe.shopowner;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,6 +19,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.coffeecafe.R;
 import com.example.coffeecafe.auth.AuthManager;
 import com.example.coffeecafe.config.SupabaseApi;
+import com.example.coffeecafe.customer.OrderEditActivity;
 import com.example.coffeecafe.models.Order;
 import com.example.coffeecafe.utils.SessionManager;
 import com.google.gson.Gson;
@@ -51,6 +53,14 @@ public class ShopOrdersFragment extends Fragment {
             @Override
             public void onStatusUpdate(String orderId, String newStatus) {
                 updateOrderStatus(orderId, newStatus);
+            }
+
+            @Override
+            public void onEditOrder(String orderId) {
+                Intent intent = new Intent(getContext(), OrderEditActivity.class);
+                intent.putExtra("order_id", orderId);
+                intent.putExtra("is_shop_owner", true);
+                startActivity(intent);
             }
         });
 
@@ -143,10 +153,14 @@ public class ShopOrdersFragment extends Fragment {
         new Thread(() -> {
             try {
                 String updateJson = "{\"status\":\"" + newStatus + "\"}";
-                SupabaseApi.getInstance().patch("orders", "id=eq." + orderId, updateJson);
+                String token = AuthManager.getInstance(getContext()).getAccessToken();
+                SupabaseApi.getInstance().patch("orders", "id=eq." + orderId, updateJson, token);
 
                 if (getActivity() != null) {
-                    getActivity().runOnUiThread(this::loadOrders);
+                    getActivity().runOnUiThread(() -> {
+                        Toast.makeText(getContext(), "Status updated", Toast.LENGTH_SHORT).show();
+                        loadOrders();
+                    });
                 }
             } catch (Exception e) {
                 if (getActivity() != null) {
@@ -164,6 +178,7 @@ public class ShopOrdersFragment extends Fragment {
 
         interface OnOrderActionListener {
             void onStatusUpdate(String orderId, String newStatus);
+            void onEditOrder(String orderId);
         }
 
         OrderAdapter(List<Order> orders, OnOrderActionListener listener) {
@@ -185,21 +200,68 @@ public class ShopOrdersFragment extends Fragment {
                     ? order.getId().substring(0, 8) : order.getId();
             holder.orderId.setText("Order #" + displayId);
             holder.orderStatus.setText(order.getStatusDisplay());
-            holder.orderAmount.setText(String.format("$%.2f", order.getTotalAmount()));
+            holder.orderAmount.setText(String.format("KES %.0f", order.getTotalAmount()));
             holder.orderDate.setText(order.getCreatedAt());
 
-            holder.nextStatusButton.setVisibility(View.VISIBLE);
+            // Status color
+            int statusColor;
             switch (order.getStatus()) {
+                case "pending": statusColor = 0xFFFF9800; break;
+                case "approved": statusColor = 0xFF2196F3; break;
+                case "paid": statusColor = 0xFF4CAF50; break;
+                case "preparing": statusColor = 0xFFFF9800; break;
+                case "ready": statusColor = 0xFF2196F3; break;
+                case "completed": statusColor = 0xFF4CAF50; break;
+                case "cancelled": statusColor = 0xFFF44336; break;
+                default: statusColor = 0xFF9E9E9E; break;
+            }
+            holder.orderStatus.setTextColor(statusColor);
+
+            // Show customer name if available
+            if (order.getCustomerName() != null && !order.getCustomerName().isEmpty()) {
+                holder.customerName.setVisibility(View.VISIBLE);
+                holder.customerName.setText(order.getCustomerName());
+            } else {
+                holder.customerName.setVisibility(View.GONE);
+            }
+
+            // Edit button - always visible
+            holder.editButton.setVisibility(View.VISIBLE);
+            holder.editButton.setOnClickListener(v -> listener.onEditOrder(order.getId()));
+
+            // Status advance buttons
+            holder.nextStatusButton.setVisibility(View.VISIBLE);
+            holder.rejectButton.setVisibility(View.GONE);
+            switch (order.getStatus()) {
+                case "pending":
+                    holder.nextStatusButton.setText("Approve");
+                    holder.nextStatusButton.setBackgroundColor(0xFF4CAF50);
+                    holder.nextStatusButton.setOnClickListener(v -> listener.onStatusUpdate(order.getId(), "approved"));
+                    holder.rejectButton.setVisibility(View.VISIBLE);
+                    holder.rejectButton.setOnClickListener(v -> listener.onStatusUpdate(order.getId(), "cancelled"));
+                    break;
+                case "approved":
+                    holder.nextStatusButton.setText("Confirm Payment");
+                    holder.nextStatusButton.setBackgroundColor(0xFF4CAF50);
+                    holder.nextStatusButton.setOnClickListener(v -> listener.onStatusUpdate(order.getId(), "paid"));
+                    holder.rejectButton.setVisibility(View.VISIBLE);
+                    holder.rejectButton.setOnClickListener(v -> listener.onStatusUpdate(order.getId(), "cancelled"));
+                    break;
                 case "paid":
                     holder.nextStatusButton.setText("Start Preparing");
+                    holder.nextStatusButton.setBackgroundColor(0xFFFF9800);
                     holder.nextStatusButton.setOnClickListener(v -> listener.onStatusUpdate(order.getId(), "preparing"));
+                    holder.rejectButton.setVisibility(View.VISIBLE);
+                    holder.rejectButton.setOnClickListener(v -> listener.onStatusUpdate(order.getId(), "cancelled"));
                     break;
                 case "preparing":
                     holder.nextStatusButton.setText("Mark Ready");
+                    holder.nextStatusButton.setBackgroundColor(0xFF2196F3);
                     holder.nextStatusButton.setOnClickListener(v -> listener.onStatusUpdate(order.getId(), "ready"));
                     break;
                 case "ready":
                     holder.nextStatusButton.setText("Mark Completed");
+                    holder.nextStatusButton.setBackgroundColor(0xFF4CAF50);
                     holder.nextStatusButton.setOnClickListener(v -> listener.onStatusUpdate(order.getId(), "completed"));
                     break;
                 default:
@@ -214,8 +276,8 @@ public class ShopOrdersFragment extends Fragment {
         }
 
         class OrderViewHolder extends RecyclerView.ViewHolder {
-            TextView orderId, orderStatus, orderAmount, orderDate;
-            Button nextStatusButton;
+            TextView orderId, orderStatus, orderAmount, orderDate, customerName;
+            Button nextStatusButton, rejectButton, editButton;
 
             OrderViewHolder(@NonNull View itemView) {
                 super(itemView);
@@ -223,7 +285,10 @@ public class ShopOrdersFragment extends Fragment {
                 orderStatus = itemView.findViewById(R.id.order_status);
                 orderAmount = itemView.findViewById(R.id.order_amount);
                 orderDate = itemView.findViewById(R.id.order_date);
+                customerName = itemView.findViewById(R.id.customer_name);
                 nextStatusButton = itemView.findViewById(R.id.next_status_button);
+                rejectButton = itemView.findViewById(R.id.reject_button);
+                editButton = itemView.findViewById(R.id.edit_button);
             }
         }
     }

@@ -195,25 +195,33 @@ public class OrderTrackingActivity extends AppCompatActivity {
     private void updateTimeline(String status, String createdAt) {
         // Define which steps are completed based on status
         boolean hasPending = true;
+        boolean hasApproved = false;
         boolean hasPaid = false;
         boolean hasPreparing = false;
         boolean hasReady = false;
         boolean hasCompleted = false;
 
         switch (status) {
+            case "approved":
+                hasApproved = true;
+                break;
             case "paid":
+                hasApproved = true;
                 hasPaid = true;
                 break;
             case "preparing":
+                hasApproved = true;
                 hasPaid = true;
                 hasPreparing = true;
                 break;
             case "ready":
+                hasApproved = true;
                 hasPaid = true;
                 hasPreparing = true;
                 hasReady = true;
                 break;
             case "completed":
+                hasApproved = true;
                 hasPaid = true;
                 hasPreparing = true;
                 hasReady = true;
@@ -227,17 +235,17 @@ public class OrderTrackingActivity extends AppCompatActivity {
         // Update pending
         setStepActive(dotPending, labelPending, timePending, true, "Order Placed", createdAt);
 
-        // Update paid
-        setStepActive(dotPaid, labelPaid, timePaid, hasPaid,
-                hasPaid ? "Payment Confirmed" : "Awaiting Payment",
-                hasPaid ? createdAt : "");
-        setLineActive(linePending, hasPaid);
+        // Update approved
+        setStepActive(dotPaid, labelPaid, timePaid, hasApproved,
+                hasApproved ? "Approved by Shop" : "Awaiting Approval",
+                hasApproved ? createdAt : "");
+        setLineActive(linePending, hasApproved);
 
-        // Update preparing
-        setStepActive(dotPreparing, labelPreparing, timePreparing, hasPreparing,
-                hasPreparing ? "Preparing Your Order" : "Waiting...",
-                hasPreparing ? createdAt : "");
-        setLineActive(linePaid, hasPreparing);
+        // Update paid
+        setStepActive(dotPreparing, labelPreparing, timePreparing, hasPaid,
+                hasPaid ? "Payment Confirmed" : "Waiting...",
+                hasPaid ? createdAt : "");
+        setLineActive(linePaid, hasPaid);
 
         // Update ready
         setStepActive(dotReady, labelReady, timeReady, hasReady,

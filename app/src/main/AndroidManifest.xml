@@ -49,6 +49,9 @@
         <activity
             android:name=".customer.OrderTrackingActivity"
             android:exported="false" />
+        <activity
+            android:name=".customer.OrderEditActivity"
+            android:exported="false" />
     </application>
 
 </manifest>

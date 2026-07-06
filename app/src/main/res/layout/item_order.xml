@@ -44,6 +44,16 @@
                 android:paddingVertical="3dp" />
         </LinearLayout>
 
+        <TextView
+            android:id="@+id/customer_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Customer Name"
+            android:textSize="12sp"
+            android:textColor="@color/text_muted"
+            android:layout_marginTop="4dp"
+            android:visibility="gone" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -70,34 +80,54 @@
                 android:textColor="@color/text_muted" />
         </LinearLayout>
 
+        <!-- Edit Button -->
         <Button
-            android:id="@+id/next_status_button"
-            android:layout_width="0dp"
+            android:id="@+id/edit_button"
+            android:layout_width="match_parent"
             android:layout_height="38dp"
-            android:layout_weight="1"
-            android:text="Start Preparing"
+            android:text="Edit Order"
             android:textAllCaps="false"
             android:textSize="14sp"
             android:textStyle="bold"
             android:textColor="@color/text_on_primary"
             android:background="@drawable/btn_bg"
             android:layout_marginTop="10dp"
-            android:layout_marginEnd="8dp"
             android:visibility="gone" />
 
-        <Button
-            android:id="@+id/reject_button"
-            android:layout_width="0dp"
-            android:layout_height="38dp"
-            android:layout_weight="1"
-            android:text="Reject"
-            android:textAllCaps="false"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:textColor="@color/white"
-            android:background="@drawable/cancel_btn_bg"
-            android:layout_marginTop="10dp"
-            android:layout_marginStart="8dp"
-            android:visibility="gone" />
+        <!-- Status Buttons Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
+
+            <Button
+                android:id="@+id/next_status_button"
+                android:layout_width="0dp"
+                android:layout_height="38dp"
+                android:layout_weight="1"
+                android:text="Start Preparing"
+                android:textAllCaps="false"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_on_primary"
+                android:background="@drawable/btn_bg"
+                android:layout_marginEnd="8dp"
+                android:visibility="gone" />
+
+            <Button
+                android:id="@+id/reject_button"
+                android:layout_width="0dp"
+                android:layout_height="38dp"
+                android:layout_weight="1"
+                android:text="Reject"
+                android:textAllCaps="false"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@color/white"
+                android:background="@drawable/cancel_btn_bg"
+                android:layout_marginStart="8dp"
+                android:visibility="gone" />
+        </LinearLayout>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

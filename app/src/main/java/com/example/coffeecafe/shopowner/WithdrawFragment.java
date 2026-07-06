@@ -111,6 +111,7 @@ public class WithdrawFragment extends Fragment {
 
         new Thread(() -> {
             try {
+                // Get gross revenue from completed/paid orders
                 String query = "select=total_amount&shop_id=eq." + shopId;
                 String response = SupabaseApi.getInstance().get("orders", query, token);
 
@@ -125,7 +126,20 @@ public class WithdrawFragment extends Fragment {
                         }
                     }
                 }
-                currentBalance = revenue;
+
+                // Subtract approved/completed withdrawals
+                String withdrawalQuery = "select=amount&shop_owner_id=eq." + userId + "&status=in.(approved,completed)";
+                String withdrawalResponse = SupabaseApi.getInstance().get("withdrawals", withdrawalQuery, token);
+
+                Withdrawal[] withdrawals = gson.fromJson(withdrawalResponse, Withdrawal[].class);
+                double withdrawn = 0;
+                if (withdrawals != null) {
+                    for (Withdrawal w : withdrawals) {
+                        withdrawn += w.getAmount();
+                    }
+                }
+
+                currentBalance = revenue - withdrawn;
 
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {

@@ -142,19 +142,27 @@
                 android:paddingHorizontal="14dp"
                 android:background="@drawable/edit_text_bg" />
 
-            <EditText
-                android:id="@+id/product_category_input"
+            <Spinner
+                android:id="@+id/product_category_spinner"
                 android:layout_width="0dp"
                 android:layout_height="44dp"
                 android:layout_weight="1"
-                android:hint="Category"
-                android:textSize="14sp"
-                android:textColorHint="@color/text_hint"
-                android:textColor="@color/text_primary"
-                android:paddingHorizontal="14dp"
                 android:background="@drawable/edit_text_bg"
                 android:layout_marginStart="8dp" />
         </LinearLayout>
+
+        <EditText
+            android:id="@+id/product_category_other_input"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:hint="Enter custom category"
+            android:textSize="14sp"
+            android:textColorHint="@color/text_hint"
+            android:textColor="@color/text_primary"
+            android:paddingHorizontal="14dp"
+            android:background="@drawable/edit_text_bg"
+            android:layout_marginTop="8dp"
+            android:visibility="gone" />
 
         <EditText
             android:id="@+id/product_quantity_input"

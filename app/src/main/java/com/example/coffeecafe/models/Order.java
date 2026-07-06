@@ -83,6 +83,7 @@ public class Order {
     public void setCustomerName(String customerName) { this.customerName = customerName; }
 
     public boolean isPending() { return "pending".equals(status); }
+    public boolean isApproved() { return "approved".equals(status); }
     public boolean isPaid() { return "paid".equals(status); }
     public boolean isPreparing() { return "preparing".equals(status); }
     public boolean isReady() { return "ready".equals(status); }
@@ -91,7 +92,8 @@ public class Order {
 
     public String getStatusDisplay() {
         switch (status) {
-            case "pending": return "Pending Payment";
+            case "pending": return "Pending Review";
+            case "approved": return "Approved";
             case "paid": return "Payment Confirmed";
             case "preparing": return "Preparing";
             case "ready": return "Ready for Pickup";

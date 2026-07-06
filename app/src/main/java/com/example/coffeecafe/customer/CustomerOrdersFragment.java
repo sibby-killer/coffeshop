@@ -5,11 +5,14 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -101,6 +104,37 @@ public class CustomerOrdersFragment extends Fragment {
         }).start();
     }
 
+    private void cancelOrder(String orderId) {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Cancel Order")
+                .setMessage("Are you sure you want to cancel this order?")
+                .setPositiveButton("Cancel Order", (dialog, which) -> {
+                    progressBar.setVisibility(View.VISIBLE);
+                    String token = AuthManager.getInstance(getContext()).getAccessToken();
+                    new Thread(() -> {
+                        try {
+                            String updateJson = "{\"status\":\"cancelled\"}";
+                            SupabaseApi.getInstance().patch("orders", "id=eq." + orderId, updateJson, token);
+                            if (getActivity() != null) {
+                                getActivity().runOnUiThread(() -> {
+                                    Toast.makeText(getContext(), "Order cancelled", Toast.LENGTH_SHORT).show();
+                                    loadOrders();
+                                });
+                            }
+                        } catch (Exception e) {
+                            if (getActivity() != null) {
+                                getActivity().runOnUiThread(() -> {
+                                    progressBar.setVisibility(View.GONE);
+                                    Toast.makeText(getContext(), "Failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                });
+                            }
+                        }
+                    }).start();
+                })
+                .setNegativeButton("Keep Order", null)
+                .show();
+    }
+
     private class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.OrderViewHolder> {
         private final List<Order> orders;
 
@@ -122,11 +156,13 @@ public class CustomerOrdersFragment extends Fragment {
                     ? order.getId().substring(0, 8) : order.getId();
             holder.orderId.setText("Order #" + displayId);
             holder.orderStatus.setText(order.getStatusDisplay());
-            holder.orderAmount.setText(String.format("$%.2f", order.getTotalAmount()));
+            holder.orderAmount.setText(String.format("KES %.0f", order.getTotalAmount()));
             holder.orderDate.setText(order.getCreatedAt());
 
             int statusColor;
             switch (order.getStatus()) {
+                case "pending": statusColor = 0xFFFF9800; break;
+                case "approved": statusColor = 0xFF2196F3; break;
                 case "paid": statusColor = 0xFF4CAF50; break;
                 case "preparing": statusColor = 0xFFFF9800; break;
                 case "ready": statusColor = 0xFF2196F3; break;
@@ -135,6 +171,39 @@ public class CustomerOrdersFragment extends Fragment {
                 default: statusColor = 0xFF9E9E9E; break;
             }
             holder.orderStatus.setTextColor(statusColor);
+
+            // Show shop name if available
+            if (order.getShopName() != null && !order.getShopName().isEmpty()) {
+                holder.customerName.setVisibility(View.VISIBLE);
+                holder.customerName.setText("From: " + order.getShopName());
+            } else {
+                holder.customerName.setVisibility(View.GONE);
+            }
+
+            // Edit button - only for pending orders
+            if ("pending".equals(order.getStatus())) {
+                holder.editButton.setVisibility(View.VISIBLE);
+                holder.editButton.setOnClickListener(v -> {
+                    Intent intent = new Intent(getContext(), OrderEditActivity.class);
+                    intent.putExtra("order_id", order.getId());
+                    intent.putExtra("is_shop_owner", false);
+                    startActivity(intent);
+                });
+            } else {
+                holder.editButton.setVisibility(View.GONE);
+            }
+
+            // Cancel button - only for pending and approved orders
+            if ("pending".equals(order.getStatus()) || "approved".equals(order.getStatus())) {
+                holder.rejectButton.setVisibility(View.VISIBLE);
+                holder.rejectButton.setText("Cancel");
+                holder.rejectButton.setOnClickListener(v -> cancelOrder(order.getId()));
+            } else {
+                holder.rejectButton.setVisibility(View.GONE);
+            }
+
+            // No next status button for customers
+            holder.nextStatusButton.setVisibility(View.GONE);
 
             // Click to open order tracking
             holder.itemView.setOnClickListener(v -> {
@@ -150,7 +219,8 @@ public class CustomerOrdersFragment extends Fragment {
         }
 
         class OrderViewHolder extends RecyclerView.ViewHolder {
-            TextView orderId, orderStatus, orderAmount, orderDate;
+            TextView orderId, orderStatus, orderAmount, orderDate, customerName;
+            Button nextStatusButton, rejectButton, editButton;
 
             OrderViewHolder(@NonNull View itemView) {
                 super(itemView);
@@ -158,6 +228,10 @@ public class CustomerOrdersFragment extends Fragment {
                 orderStatus = itemView.findViewById(R.id.order_status);
                 orderAmount = itemView.findViewById(R.id.order_amount);
                 orderDate = itemView.findViewById(R.id.order_date);
+                customerName = itemView.findViewById(R.id.customer_name);
+                nextStatusButton = itemView.findViewById(R.id.next_status_button);
+                rejectButton = itemView.findViewById(R.id.reject_button);
+                editButton = itemView.findViewById(R.id.edit_button);
             }
         }
     }

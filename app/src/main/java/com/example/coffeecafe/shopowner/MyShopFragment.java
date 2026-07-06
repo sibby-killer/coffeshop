@@ -1,7 +1,6 @@
 package com.example.coffeecafe.shopowner;
 
 import android.content.Intent;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -24,6 +23,11 @@ import com.example.coffeecafe.auth.AuthManager;
 import com.example.coffeecafe.config.SupabaseApi;
 import com.example.coffeecafe.utils.SessionManager;
 import com.google.gson.Gson;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.util.UUID;
 
 public class MyShopFragment extends Fragment {
     private EditText shopNameInput, descriptionInput, locationInput, phoneInput;
@@ -89,17 +93,27 @@ public class MyShopFragment extends Fragment {
         }
     }
 
-    private String getRealPathFromUri(Uri uri) {
-        String[] projection = {MediaStore.Images.Media.DATA};
-        Cursor cursor = getActivity().getContentResolver().query(uri, projection, null, null, null);
-        if (cursor != null) {
-            int colIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-            cursor.moveToFirst();
-            String path = cursor.getString(colIndex);
-            cursor.close();
-            return path;
+    private String getFilePathFromUri(Uri uri) {
+        try {
+            InputStream inputStream = getActivity().getContentResolver().openInputStream(uri);
+            if (inputStream == null) return null;
+
+            String fileName = "shop_" + UUID.randomUUID().toString().substring(0, 8) + ".jpg";
+
+            File tempFile = new File(getContext().getCacheDir(), fileName);
+            FileOutputStream outputStream = new FileOutputStream(tempFile);
+            byte[] buffer = new byte[4096];
+            int read;
+            while ((read = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, read);
+            }
+            outputStream.close();
+            inputStream.close();
+            return tempFile.getAbsolutePath();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
-        return uri.getPath();
     }
 
     private void loadShopDetails() {
@@ -176,7 +190,7 @@ public class MyShopFragment extends Fragment {
                 // Upload logo if selected
                 String imageUrl = "";
                 if (selectedLogoUri != null) {
-                    String filePath = getRealPathFromUri(selectedLogoUri);
+                    String filePath = getFilePathFromUri(selectedLogoUri);
                     if (filePath != null) {
                         imageUrl = SupabaseApi.getInstance().uploadFile("shops", filePath, true, token);
                     }
@@ -237,7 +251,7 @@ public class MyShopFragment extends Fragment {
                 // Upload new logo if selected
                 String imageUrl = currentImageUrl != null ? currentImageUrl : "";
                 if (selectedLogoUri != null) {
-                    String filePath = getRealPathFromUri(selectedLogoUri);
+                    String filePath = getFilePathFromUri(selectedLogoUri);
                     if (filePath != null) {
                         imageUrl = SupabaseApi.getInstance().uploadFile("shops", filePath, true, token);
                     }
