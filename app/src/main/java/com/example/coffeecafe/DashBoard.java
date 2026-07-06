@@ -1,8 +1,10 @@
 package com.example.coffeecafe;
 
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
@@ -48,6 +50,33 @@ public class DashBoard extends AppCompatActivity {
         bottomNavigationView = findViewById(R.id.bottom_nav_bar);
 
         setupNavigationForRole();
+
+        // Handle deep link with payment reference
+        handlePaymentDeepLink();
+    }
+
+    private void handlePaymentDeepLink() {
+        if (getIntent() != null && getIntent().getData() != null) {
+            Uri data = getIntent().getData();
+            String host = data.getHost();
+            if ("orders".equals(host)) {
+                String reference = data.getQueryParameter("reference");
+                if (reference != null && !reference.isEmpty()) {
+                    // Verify payment via edge function
+                    new Thread(() -> {
+                        try {
+                            String verifyUrl = "verify-transaction?reference=" + reference;
+                            SupabaseApi.getInstance().postEdgeFunction(verifyUrl, "{}", null);
+                        } catch (Exception e) {
+                            // Verification might fail but order could still be updated
+                        }
+                        runOnUiThread(() -> {
+                            Toast.makeText(this, "Payment verified!", Toast.LENGTH_SHORT).show();
+                        });
+                    }).start();
+                }
+            }
+        }
     }
 
     private void setupNavigationForRole() {

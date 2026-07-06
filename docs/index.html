@@ -37,24 +37,63 @@
             font-size: 16px;
             font-weight: 600;
             transition: background 0.2s;
+            border: none;
+            cursor: pointer;
         }
         .open-btn:hover { background: #E65100; }
         .hint { color: #BBBBBB; font-size: 12px; margin-top: 16px; }
+        .loading { color: #888; font-size: 14px; margin-bottom: 16px; }
+        .spinner {
+            width: 40px; height: 40px;
+            border: 4px solid #EEEEEE;
+            border-top: 4px solid #FF8F00;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
     <div class="card">
-        <div class="icon">&#9749;</div>
-        <h1>Payment Successful!</h1>
-        <p>Your order has been placed. Tap below to open CoffeeCafe and track your order.</p>
-        <a href="coffeecafe://orders" class="open-btn">Open CoffeeCafe</a>
-        <p class="hint">If the app didn't open, tap the button again or open CoffeeCafe manually.</p>
+        <div id="loading-state">
+            <div class="spinner"></div>
+            <h1>Processing Payment...</h1>
+            <p class="loading">Please wait while we confirm your payment.</p>
+        </div>
+        <div id="success-state" style="display:none;">
+            <div class="icon">&#9749;</div>
+            <h1>Payment Successful!</h1>
+            <p>Your payment has been confirmed. Tap below to open CoffeeCafe and track your order.</p>
+            <a id="open-app-btn" href="coffeecafe://orders" class="open-btn">Open CoffeeCafe</a>
+            <p class="hint">If the app didn't open, tap the button again or open CoffeeCafe manually.</p>
+        </div>
     </div>
     <script>
-        // Auto-try deep link on page load
-        window.onload = function() {
-            window.location.href = "coffeecafe://orders";
-        };
+        (function() {
+            var params = new URLSearchParams(window.location.search);
+            var reference = params.get('reference') || params.get('trxref') || '';
+
+            if (reference) {
+                // Build deep link with reference so the app can verify it
+                var deepLink = 'coffeecafe://orders?reference=' + encodeURIComponent(reference);
+
+                // Try deep link immediately
+                window.location.href = deepLink;
+
+                // After a short delay, show the button
+                setTimeout(function() {
+                    document.getElementById('loading-state').style.display = 'none';
+                    document.getElementById('success-state').style.display = 'block';
+                    document.getElementById('open-app-btn').href = deepLink;
+                }, 2000);
+            } else {
+                // No reference — just show the button
+                document.getElementById('loading-state').style.display = 'none';
+                document.getElementById('success-state').style.display = 'block';
+                document.getElementById('open-app-btn').href = 'coffeecafe://orders';
+            }
+        })();
     </script>
 </body>
 </html>

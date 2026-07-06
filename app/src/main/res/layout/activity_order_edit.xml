@@ -233,6 +233,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:padding="12dp"
+        android:paddingBottom="24dp"
         android:background="#FFFFFF"
         android:elevation="8dp">
 

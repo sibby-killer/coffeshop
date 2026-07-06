@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -15,6 +16,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.coffeecafe.R;
 import com.example.coffeecafe.config.SupabaseApi;
 import com.example.coffeecafe.models.Product;
@@ -151,6 +153,19 @@ public class ShopDetailFragment extends Fragment {
             holder.productName.setText(product.getName());
             holder.productPrice.setText(String.format("KES %.0f", product.getPrice()));
             holder.productDescription.setText(product.getDescription());
+
+            // Load product image
+            if (product.getImageUrl() != null && !product.getImageUrl().isEmpty()) {
+                Glide.with(holder.itemView.getContext())
+                        .load(product.getImageUrl())
+                        .placeholder(R.drawable.ic_products)
+                        .error(R.drawable.ic_products)
+                        .centerCrop()
+                        .into(holder.productImage);
+            } else {
+                holder.productImage.setImageResource(R.drawable.ic_products);
+            }
+
             holder.addToCartButton.setOnClickListener(v -> listener.onAddToCart(product));
         }
 
@@ -162,6 +177,7 @@ public class ShopDetailFragment extends Fragment {
         class ProductViewHolder extends RecyclerView.ViewHolder {
             TextView productName, productPrice, productDescription;
             Button addToCartButton;
+            ImageView productImage;
 
             ProductViewHolder(@NonNull View itemView) {
                 super(itemView);
@@ -169,6 +185,7 @@ public class ShopDetailFragment extends Fragment {
                 productPrice = itemView.findViewById(R.id.product_price);
                 productDescription = itemView.findViewById(R.id.product_description);
                 addToCartButton = itemView.findViewById(R.id.add_to_cart_button);
+                productImage = itemView.findViewById(R.id.product_image);
             }
         }
     }

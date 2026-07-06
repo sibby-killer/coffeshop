@@ -12,50 +12,70 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="14dp">
+        android:orientation="horizontal"
+        android:padding="14dp"
+        android:gravity="center_vertical">
 
-        <TextView
-            android:id="@+id/product_name"
-            android:layout_width="match_parent"
+        <!-- Product Image -->
+        <ImageView
+            android:id="@+id/product_image"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:scaleType="centerCrop"
+            android:background="@drawable/grid_bg"
+            android:src="@drawable/ic_products"
+            android:contentDescription="Product image" />
+
+        <!-- Product Info -->
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Product Name"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:textColor="@color/text_primary"
-            android:fontFamily="@font/poppins_regular" />
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="12dp">
 
-        <TextView
-            android:id="@+id/product_price"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="KES 0"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:textColor="@color/primary"
-            android:layout_marginTop="4dp" />
+            <TextView
+                android:id="@+id/product_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Product Name"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:fontFamily="@font/poppins_regular" />
 
-        <TextView
-            android:id="@+id/product_description"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Description"
-            android:textSize="13sp"
-            android:textColor="@color/text_muted"
-            android:layout_marginTop="4dp"
-            android:maxLines="2"
-            android:ellipsize="end" />
+            <TextView
+                android:id="@+id/product_price"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="KES 0"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@color/primary"
+                android:layout_marginTop="4dp" />
 
-        <Button
-            android:id="@+id/add_to_cart_button"
-            android:layout_width="match_parent"
-            android:layout_height="38dp"
-            android:text="Add to Cart"
-            android:textAllCaps="false"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:textColor="@color/text_on_primary"
-            android:background="@drawable/btn_bg"
-            android:layout_marginTop="10dp" />
+            <TextView
+                android:id="@+id/product_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Description"
+                android:textSize="13sp"
+                android:textColor="@color/text_muted"
+                android:layout_marginTop="4dp"
+                android:maxLines="2"
+                android:ellipsize="end" />
+
+            <Button
+                android:id="@+id/add_to_cart_button"
+                android:layout_width="match_parent"
+                android:layout_height="38dp"
+                android:text="Add to Cart"
+                android:textAllCaps="false"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_on_primary"
+                android:background="@drawable/btn_bg"
+                android:layout_marginTop="8dp" />
+        </LinearLayout>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

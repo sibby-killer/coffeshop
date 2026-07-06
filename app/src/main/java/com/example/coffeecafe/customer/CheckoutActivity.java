@@ -22,7 +22,6 @@ import com.example.coffeecafe.R;
 import com.example.coffeecafe.auth.AuthManager;
 import com.example.coffeecafe.config.SupabaseApi;
 import com.example.coffeecafe.models.Order;
-import com.example.coffeecafe.models.OrderItem;
 import com.example.coffeecafe.utils.CartManager;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -31,30 +30,21 @@ import com.google.gson.JsonParser;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 public class CheckoutActivity extends AppCompatActivity {
-    private TextView totalView, itemsSummary, statusText, phoneError;
+    private TextView totalView, itemsSummary, statusText, phoneError, waitingText, waitingSubtext;
     private EditText phoneInput, notesInput;
     private RadioGroup paymentMethodGroup;
     private RadioButton radioMpesa, radioAirtel, radioCard;
-    private LinearLayout cardMpesa, cardAirtel, cardCard;
-    private Button payButton;
+    private LinearLayout cardMpesa, cardAirtel, cardCard, formContainer;
+    private Button payButton, viewOrderBtn;
     private ProgressBar progressBar;
     private ImageView backBtn;
+    private LinearLayout waitingContainer;
 
-    private static final String[] PHONE_ERROR_MESSAGES = {
-        "That phone number looks sus... Are you sure that's Kenyan?",
-        "12 digits, fam. 254 + 9 digits. You got this!",
-        "Even M-Pesa won't recognize that number. Try again!",
-        "That's not a phone number, that's a password!",
-        "Safaricom called. They said that number doesn't exist.",
-        "Airtel says 'nah, try again'. 254XXXXXXXXXX format!",
-        "Is that your WiFi password? Use 254 + 9 digits!",
-        "That number has trust issues. Too many or too few digits!",
-        "Even your grandma's flip phone has a better number!",
-        "Error 404: Valid phone number not found. Use 254XXXXXXXXXX!"
-    };
+    private String createdOrderId;
+
+    private static final String PHONE_ERROR_MESSAGE = "Enter a valid phone number: 254 + 9 digits (e.g. 254712345678)";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,6 +70,12 @@ public class CheckoutActivity extends AppCompatActivity {
 
         backBtn.setOnClickListener(v -> finish());
 
+        // Waiting container (shown after order placed)
+        waitingContainer = findViewById(R.id.waiting_container);
+        waitingText = findViewById(R.id.waiting_text);
+        waitingSubtext = findViewById(R.id.waiting_subtext);
+        viewOrderBtn = findViewById(R.id.view_order_btn);
+
         // Pre-fill phone from profile
         String phone = AuthManager.getInstance(this).getCurrentProfile() != null
                 ? AuthManager.getInstance(this).getCurrentProfile().getPhone() : "";
@@ -100,7 +96,6 @@ public class CheckoutActivity extends AppCompatActivity {
         }
         itemsSummary.setText(summary.toString());
 
-        // Card click handlers - select only ONE payment method
         cardMpesa.setOnClickListener(v -> {
             radioMpesa.setChecked(true);
             radioAirtel.setChecked(false);
@@ -122,14 +117,11 @@ public class CheckoutActivity extends AppCompatActivity {
             phoneInput.setVisibility(View.GONE);
         });
 
-        // Phone validation - live as user types
         phoneInput.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {}
-
             @Override
             public void afterTextChanged(Editable s) {
                 String phoneVal = s.toString().trim();
@@ -147,6 +139,15 @@ public class CheckoutActivity extends AppCompatActivity {
         });
 
         payButton.setOnClickListener(v -> processPayment());
+
+        viewOrderBtn.setOnClickListener(v -> {
+            if (createdOrderId != null) {
+                Intent intent = new Intent(CheckoutActivity.this, OrderTrackingActivity.class);
+                intent.putExtra("order_id", createdOrderId);
+                startActivity(intent);
+                finish();
+            }
+        });
     }
 
     private boolean isValidKenyanPhone(String phone) {
@@ -172,7 +173,6 @@ public class CheckoutActivity extends AppCompatActivity {
         String phone = phoneInput.getText().toString().trim();
         String notes = notesInput.getText().toString().trim();
 
-        // Determine payment method
         String paymentMethod;
         if (radioMpesa.isChecked()) {
             paymentMethod = "mobile_money";
@@ -182,7 +182,6 @@ public class CheckoutActivity extends AppCompatActivity {
             paymentMethod = "card";
         }
 
-        // Validate phone for mobile money
         if (!radioCard.isChecked()) {
             if (phone.isEmpty()) {
                 phoneInput.setError("Phone number required for M-Pesa/Airtel");
@@ -190,10 +189,8 @@ public class CheckoutActivity extends AppCompatActivity {
                 return;
             }
             if (!isValidKenyanPhone(phone)) {
-                Random rand = new Random();
-                String errorMsg = PHONE_ERROR_MESSAGES[rand.nextInt(PHONE_ERROR_MESSAGES.length)];
                 phoneError.setVisibility(View.VISIBLE);
-                phoneError.setText(errorMsg);
+                phoneError.setText(PHONE_ERROR_MESSAGE);
                 phoneInput.requestFocus();
                 return;
             }
@@ -204,7 +201,6 @@ public class CheckoutActivity extends AppCompatActivity {
         statusText.setVisibility(View.VISIBLE);
         statusText.setText("Creating order...");
 
-        // Check token before proceeding
         if (token == null || token.isEmpty()) {
             runOnUiThread(() -> {
                 progressBar.setVisibility(View.GONE);
@@ -220,7 +216,6 @@ public class CheckoutActivity extends AppCompatActivity {
                 String shopId = cartManager.getCartShopId();
                 final String[] authToken = {AuthManager.getInstance(this).getAccessToken()};
 
-                // Create order
                 Map<String, Object> orderData = new HashMap<>();
                 orderData.put("customer_id", userId);
                 orderData.put("shop_id", shopId);
@@ -248,8 +243,8 @@ public class CheckoutActivity extends AppCompatActivity {
                 }
 
                 String orderId = createdOrders[0].getId();
+                createdOrderId = orderId;
 
-                // Insert order items
                 List<CartManager.CartItem> cartItems = cartManager.getCartItems();
                 for (CartManager.CartItem item : cartItems) {
                     Map<String, Object> itemData = new HashMap<>();
@@ -272,13 +267,12 @@ public class CheckoutActivity extends AppCompatActivity {
 
                 runOnUiThread(() -> statusText.setText("Initializing payment..."));
 
-                // Call Paystack edge function
                 Map<String, Object> paystackBody = new HashMap<>();
-                paystackBody.put("amount", total * 100); // Paystack uses kobo/pesewas
+                paystackBody.put("amount", total * 100);
                 paystackBody.put("email", email);
                 paystackBody.put("order_id", orderId);
                 paystackBody.put("payment_method", paymentMethod);
-                paystackBody.put("callback_url", "https://sibby-killer.github.io/coffeshop/payment-callback.html");
+                paystackBody.put("callback_url", "https://sibby-killer.github.io/coffeshop/");
 
                 if (!radioCard.isChecked()) {
                     paystackBody.put("phone", phone);
@@ -309,10 +303,8 @@ public class CheckoutActivity extends AppCompatActivity {
                     }
                 }
 
-                // Parse response for redirect URL or authorization URL
                 JsonObject responseJson = JsonParser.parseString(responseBody).getAsJsonObject();
 
-                // Store payment reference on the order
                 if (responseJson.has("reference")) {
                     String ref = responseJson.get("reference").getAsString();
                     Map<String, Object> refUpdate = new HashMap<>();
@@ -321,12 +313,9 @@ public class CheckoutActivity extends AppCompatActivity {
                         SupabaseApi.getInstance().patch("orders", "id=eq." + orderId,
                                 new Gson().toJson(refUpdate), authToken[0]);
                     } catch (Exception e) {
-                        // Non-critical, continue
+                        // Non-critical
                     }
                 }
-
-                // Build callback URL for returning to app after payment
-                final String callbackUrl = "https://sibby-killer.github.io/coffeshop/payment-callback.html";
 
                 runOnUiThread(() -> {
                     progressBar.setVisibility(View.GONE);
@@ -334,28 +323,14 @@ public class CheckoutActivity extends AppCompatActivity {
 
                     if (responseJson.has("authorization_url")) {
                         String authUrl = responseJson.get("authorization_url").getAsString();
-                        // Append callback to auth URL
-                        if (authUrl.contains("?")) {
-                            authUrl += "&callback_url=" + Uri.encode(callbackUrl);
-                        } else {
-                            authUrl += "?callback_url=" + Uri.encode(callbackUrl);
-                        }
                         Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(authUrl));
                         startActivity(browserIntent);
 
-                        // Navigate to order tracking instead of finishing
-                        Toast.makeText(this, "Order placed! After payment you'll be redirected back.", Toast.LENGTH_LONG).show();
-                        Intent trackIntent = new Intent(CheckoutActivity.this, OrderTrackingActivity.class);
-                        trackIntent.putExtra("order_id", orderId);
-                        startActivity(trackIntent);
+                        showWaitingScreen(orderId);
                     } else {
                         statusText.setText("Payment initiated! Order: " + orderId.substring(0, 8));
-                        Intent trackIntent = new Intent(CheckoutActivity.this, OrderTrackingActivity.class);
-                        trackIntent.putExtra("order_id", orderId);
-                        startActivity(trackIntent);
+                        showWaitingScreen(orderId);
                     }
-
-                    finish();
                 });
             } catch (Exception e) {
                 String rawError = e.getMessage();
@@ -374,5 +349,14 @@ public class CheckoutActivity extends AppCompatActivity {
                 });
             }
         }).start();
+    }
+
+    private void showWaitingScreen(String orderId) {
+        formContainer = findViewById(R.id.form_container);
+        formContainer.setVisibility(View.GONE);
+        waitingContainer.setVisibility(View.VISIBLE);
+        String displayId = orderId.length() >= 8 ? orderId.substring(0, 8) : orderId;
+        waitingText.setText("Order #" + displayId + " placed!");
+        waitingSubtext.setText("Complete your payment in the browser. After payment you'll be redirected back to CoffeeCafe.");
     }
 }

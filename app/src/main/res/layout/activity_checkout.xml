@@ -41,7 +41,9 @@
                 android:layout_marginStart="12dp" />
         </LinearLayout>
 
+        <!-- FORM CONTAINER (hidden after order placed) -->
         <LinearLayout
+            android:id="@+id/form_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
@@ -247,5 +249,57 @@
                 android:background="@drawable/btn_bg"
                 android:layout_marginTop="16dp" />
         </LinearLayout>
+
+        <!-- WAITING CONTAINER (shown after order placed, before payment redirect) -->
+        <LinearLayout
+            android:id="@+id/waiting_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="32dp"
+            android:gravity="center"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="&#9749;"
+                android:textSize="64sp"
+                android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:id="@+id/waiting_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Order placed!"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="@color/primary"
+                android:gravity="center" />
+
+            <TextView
+                android:id="@+id/waiting_subtext"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Complete your payment in the browser. After payment you'll be redirected back to CoffeeCafe."
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"
+                android:textAlignment="center"
+                android:layout_marginTop="12dp"
+                android:lineSpacingExtra="4dp" />
+
+            <Button
+                android:id="@+id/view_order_btn"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:text="View My Orders"
+                android:textAllCaps="false"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_on_primary"
+                android:background="@drawable/btn_bg"
+                android:layout_marginTop="24dp" />
+        </LinearLayout>
+
     </LinearLayout>
 </ScrollView>
