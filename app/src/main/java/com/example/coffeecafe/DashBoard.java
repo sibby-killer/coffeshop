@@ -137,6 +137,7 @@ public class DashBoard extends AppCompatActivity {
                 bottomNavigationView.setSelectedItemId(R.id.nav_home);
             }
             setupCartBadge();
+            loadOrderCount(R.id.nav_orders);
         }
     }
 
@@ -236,6 +237,13 @@ public class DashBoard extends AppCompatActivity {
                     String orderResp = SupabaseApi.getInstance().get("orders", orderQuery, token);
                     OrderId[] orders = new Gson().fromJson(orderResp, OrderId[].class);
                     count = orders != null ? orders.length : 0;
+                } else {
+                    // Customer - show their own active orders
+                    String userId = SessionManager.getInstance(this).getUserId();
+                    String orderQuery = "select=id&customer_id=eq." + userId + "&status=in.(pending,paid)&order=created_at.desc";
+                    String orderResp = SupabaseApi.getInstance().get("orders", orderQuery, token);
+                    OrderId[] orders = new Gson().fromJson(orderResp, OrderId[].class);
+                    count = orders != null ? orders.length : 0;
                 }
 
                 final int finalCount = count;
@@ -271,6 +279,8 @@ public class DashBoard extends AppCompatActivity {
             loadOrderCount(R.id.nav_orders);
         } else if (userRole.equals("admin")) {
             loadOrderCount(R.id.nav_dashboard);
+        } else {
+            loadOrderCount(R.id.nav_orders);
         }
     }
 
