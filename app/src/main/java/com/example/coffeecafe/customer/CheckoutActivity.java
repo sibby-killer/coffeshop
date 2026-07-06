@@ -204,6 +204,17 @@ public class CheckoutActivity extends AppCompatActivity {
         statusText.setVisibility(View.VISIBLE);
         statusText.setText("Creating order...");
 
+        // Check token before proceeding
+        if (token == null || token.isEmpty()) {
+            runOnUiThread(() -> {
+                progressBar.setVisibility(View.GONE);
+                payButton.setEnabled(true);
+                statusText.setVisibility(View.GONE);
+                Toast.makeText(this, "Session expired. Please log in again.", Toast.LENGTH_LONG).show();
+            });
+            return;
+        }
+
         new Thread(() -> {
             try {
                 String shopId = cartManager.getCartShopId();
@@ -284,11 +295,19 @@ public class CheckoutActivity extends AppCompatActivity {
                     finish();
                 });
             } catch (Exception e) {
+                String rawError = e.getMessage();
+                final String displayError;
+                if (rawError != null && rawError.contains("failed:")) {
+                    int colonIndex = rawError.indexOf("failed:");
+                    displayError = rawError.substring(colonIndex + 7).trim();
+                } else {
+                    displayError = rawError != null ? rawError : "Unknown error";
+                }
                 runOnUiThread(() -> {
                     progressBar.setVisibility(View.GONE);
                     payButton.setEnabled(true);
                     statusText.setVisibility(View.GONE);
-                    Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, "Error: " + displayError, Toast.LENGTH_LONG).show();
                 });
             }
         }).start();

@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.coffeecafe.R;
+import com.example.coffeecafe.auth.AuthManager;
 import com.example.coffeecafe.config.SupabaseApi;
 import com.example.coffeecafe.models.Order;
 import com.example.coffeecafe.utils.SessionManager;
@@ -85,8 +86,9 @@ public class ShopOrdersFragment extends Fragment {
                     return;
                 }
 
+                String token = AuthManager.getInstance(getContext()).getAccessToken();
                 String query = "select=*,profiles(full_name)&shop_id=eq." + shopId + "&order=created_at.desc";
-                String response = SupabaseApi.getInstance().get("orders", query);
+                String response = SupabaseApi.getInstance().get("orders", query, token);
 
                 Gson gson = new Gson();
                 Order[] orders = gson.fromJson(response, Order[].class);
